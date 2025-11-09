@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:get/get.dart';
 
 import '../../models/playling_from.dart';
+import '../../services/activity_service.dart';
 import '../../services/downloader.dart';
 import '../screens/Playlist/playlist_screen_controller.dart';
 import '../widgets/snackbar.dart';
@@ -24,6 +26,7 @@ class PlayerController extends GetxController
     with GetSingleTickerProviderStateMixin {
   final _audioHandler = Get.find<AudioHandler>();
   final _musicServices = Get.find<MusicServices>();
+  final _activityService = Get.find<ActivityService>();
   final currentQueue = <MediaItem>[].obs;
 
   final playerPaneOpacity = (1.0).obs;
@@ -236,7 +239,10 @@ class PlayerController extends GetxController
         currentSongIndex.value = currentQueue
             .indexWhere((element) => element.id == currentSong.value!.id);
         await _checkFav();
-        await _addToRP(currentSong.value!);
+        await _activityService.addSongToHistory(currentSong.value!);
+        if (currentSong.value!.artist != null) {
+          await _activityService.addArtist(currentSong.value!.artist!);
+        }
         if (isRadioModeOn && (currentSong.value!.id == currentQueue.last.id)) {
           await _addRadioContinuation(radioInitiatorItem!);
         }
@@ -668,42 +674,6 @@ class PlayerController extends GetxController
 
   // ignore: prefer_typing_uninitialized_variables
   var recentItem;
-
-  /// This function is used to add a mediaItem/Song to Recently played playlist
-  Future<void> _addToRP(MediaItem mediaItem) async {
-    if (recentItem != mediaItem) {
-      final box = await Hive.openBox("LIBRP");
-      String? removedSongId;
-      if (box.keys.length >= 30) {
-        removedSongId = box.getAt(0)['videoId'];
-        box.deleteAt(0);
-      }
-      final valuesCopy = box.values.toList();
-      for (int i = valuesCopy.length - 1; i >= 0; i--) {
-        if (valuesCopy[i]['videoId'] == mediaItem.id) {
-          box.deleteAt(i);
-        }
-      }
-      box.add(MediaItemBuilder.toJson(mediaItem));
-      try {
-        final playlistController = Get.find<PlaylistScreenController>(
-            tag: const Key("LIBRP").hashCode.toString());
-        if (removedSongId != null) {
-          playlistController.songList
-              .removeWhere((element) => element.id == removedSongId);
-        }
-        // removes current duplicate item from list
-        playlistController.songList
-            .removeWhere((element) => element.id == mediaItem.id);
-        // adds current item to list
-        playlistController.addNRemoveItemsinList(mediaItem,
-            action: 'add', index: 0);
-
-        // ignore: empty_catches
-      } catch (e) {}
-    }
-    recentItem = mediaItem;
-  }
 
   Future<void> showLyrics() async {
     showLyricsflag.value = !showLyricsflag.value;

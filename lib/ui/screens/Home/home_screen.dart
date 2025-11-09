@@ -195,32 +195,54 @@ class Body extends StatelessWidget {
                     : Obx(() {
                         // dispose all detachached scroll controllers
                         homeScreenController.disposeDetachedScrollControllers();
-                        final items = homeScreenController
-                                .isContentFetched.value
-                            ? [
-                                Obx(() {
-                                  final scrollController = ScrollController();
-                                  homeScreenController.contentScrollControllers
-                                      .add(scrollController);
-                                  return QuickPicksWidget(
-                                      content:
-                                          homeScreenController.quickPicks.value,
-                                      scrollController: scrollController);
-                                }),
-                                ...getWidgetList(
-                                    homeScreenController.middleContent,
-                                    homeScreenController),
-                                ...getWidgetList(
-                                    homeScreenController.fixedContent,
-                                    homeScreenController)
-                              ]
-                            : [const HomeShimmer()];
-                        return ListView.builder(
-                          padding:
-                              EdgeInsets.only(bottom: 200, top: topPadding),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) => items[index],
-                        );
+                        return Obx(() {
+                          if (!homeScreenController.isContentFetched.value) {
+                            return const HomeShimmer();
+                          }
+                          return ListView(
+                            padding: EdgeInsets.only(
+                                bottom: 200, top: topPadding),
+                            children: [
+                              if (homeScreenController
+                                  .recentlyPlayed.isNotEmpty)
+                                ContentListWidget(
+                                  content: PlaylistContent(
+                                    playlistList: [
+                                      Playlist(
+                                        title: "Escuchado Recientemente",
+                                        songList: homeScreenController
+                                            .recentlyPlayed,
+                                      )
+                                    ],
+                                    title: "Escuchado Recientemente",
+                                  ),
+                                ),
+                              if (homeScreenController
+                                  .recentPlaylists.isNotEmpty)
+                                ContentListWidget(
+                                  content: PlaylistContent(
+                                    playlistList:
+                                        homeScreenController.recentPlaylists,
+                                    title: "Tus Playlists Recientes",
+                                  ),
+                                ),
+                              if (homeScreenController
+                                  .recommendations.isNotEmpty)
+                                ContentListWidget(
+                                  content: PlaylistContent(
+                                    playlistList: [
+                                      Playlist(
+                                        title: "Recomendaciones",
+                                        songList: homeScreenController
+                                            .recommendations,
+                                      )
+                                    ],
+                                    title: "Recomendaciones",
+                                  ),
+                                ),
+                            ],
+                          );
+                        });
                       }),
               ),
             ),
@@ -262,18 +284,5 @@ class Body extends StatelessWidget {
         child: Text("${homeScreenController.tabIndex.value}"),
       );
     }
-  }
-
-  List<Widget> getWidgetList(
-      dynamic list, HomeScreenController homeScreenController) {
-    return list
-        .map((content) {
-          final scrollController = ScrollController();
-          homeScreenController.contentScrollControllers.add(scrollController);
-          return ContentListWidget(
-              content: content, scrollController: scrollController);
-        })
-        .whereType<Widget>()
-        .toList();
   }
 }

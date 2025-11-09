@@ -5,6 +5,9 @@ import 'package:hive/hive.dart';
 
 import '/models/media_Item_builder.dart';
 import '/ui/player/player_controller.dart';
+import '../../../../services/activity_service.dart';
+import '../../../../services/recommendation_service.dart';
+import '../../../../models/serializable_video.dart';
 import '../../../utils/update_check_flag_file.dart';
 import '../../../utils/helper.dart';
 import '/models/album.dart';
@@ -16,8 +19,14 @@ import '/ui/widgets/new_version_dialog.dart';
 
 class HomeScreenController extends GetxController {
   final MusicServices _musicServices = Get.find<MusicServices>();
+  final ActivityService _activityService = Get.find<ActivityService>();
+  final RecommendationService _recommendationService =
+      Get.find<RecommendationService>();
   final isContentFetched = false.obs;
   final tabIndex = 0.obs;
+  final recentlyPlayed = <MediaItem>[].obs;
+  final recentPlaylists = <Playlist>[].obs;
+  final recommendations = <MediaItem>[].obs;
   final networkError = false.obs;
   final quickPicks = QuickPicks([]).obs;
   final middleContent = [].obs;
@@ -36,24 +45,32 @@ class HomeScreenController extends GetxController {
   }
 
   Future<void> loadContent() async {
-    final box = Hive.box("AppPrefs");
-    final isCachedHomeScreenDataEnabled =
-        box.get("cacheHomeScreenData") ?? true;
-    if (isCachedHomeScreenDataEnabled) {
-      final loaded = await loadContentFromDb();
+    final history = _activityService.getSongHistory();
+    final playlists = _activityService.getPlaylists();
+    final recommendations = await _recommendationService.getRecommendations();
 
-      if (loaded) {
-        final currTimeSecsDiff = DateTime.now().millisecondsSinceEpoch -
-            (box.get("homeScreenDataTime") ??
-                DateTime.now().millisecondsSinceEpoch);
-        if (currTimeSecsDiff / 1000 > 3600 * 8) {
-          loadContentFromNetwork(silent: true);
-        }
-      } else {
-        loadContentFromNetwork();
-      }
+    if (history.isEmpty && playlists.isEmpty && recommendations.isEmpty) {
+      await loadContentFromNetwork();
     } else {
-      loadContentFromNetwork();
+      recentlyPlayed.value = history
+          .map((video) => MediaItemBuilder.fromSerializableVideo(video))
+          .toList()
+          .reversed
+          .toList();
+      recentPlaylists.value = playlists.entries
+          .map((entry) => Playlist(
+                playlistId: entry.key,
+                title: entry.key,
+                songList: entry.value
+                    .map((video) =>
+                        MediaItemBuilder.fromSerializableVideo(video))
+                    .toList(),
+              ))
+          .toList();
+      this.recommendations.value = recommendations
+          .map((video) => MediaItemBuilder.fromVideo(video))
+          .toList();
+      isContentFetched.value = true;
     }
   }
 
