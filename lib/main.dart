@@ -8,8 +8,8 @@ import 'package:terminate_restart/terminate_restart.dart';
 
 import '/ui/screens/Search/search_screen_controller.dart';
 import '/utils/get_localization.dart';
-import 'services/activity_service.dart';
-import 'services/recommendation_service.dart';
+import '/services/activity_service.dart';
+import '/services/recommendation_service.dart';
 import '/services/downloader.dart';
 import '/services/piped_service.dart';
 import 'utils/app_link_controller.dart';
@@ -117,6 +117,7 @@ initHive() async {
   await Hive.openBox("SongDownloads");
   await Hive.openBox('SongsUrlCache');
   await Hive.openBox("AppPrefs");
+  await Hive.openBox("homeScreenData");
   await Hive.openBox('userHistory');
   await Hive.openBox('userPlaylists');
   await Hive.openBox('userArtists');

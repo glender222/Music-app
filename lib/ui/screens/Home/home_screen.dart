@@ -10,9 +10,9 @@ import '../Library/library.dart';
 import '../Search/search_screen.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/player/player_controller.dart';
+import '/models/playlist.dart';
+import '/models/quick_picks.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
-import '../../../models/playlist.dart';
-import '../../../models/quick_picks.dart';
 import '../../navigator.dart';
 import '../../widgets/content_list_widget.dart';
 import '../../widgets/quickpickswidget.dart';
@@ -195,44 +195,79 @@ class Body extends StatelessWidget {
                         ),
                       )
                     : Obx(() {
-                        // dispose all detachached scroll controllers
-                        homeScreenController.disposeDetachedScrollControllers();
-                        return Obx(() {
-                          if (!homeScreenController.isContentFetched.value) {
-                            return const HomeShimmer();
-                          }
-                          return ListView(
-                            padding: EdgeInsets.only(
-                                bottom: 200, top: topPadding),
-                            children: [
+                        if (!homeScreenController.isContentFetched.value) {
+                          return const HomeShimmer();
+                        }
+                        return ListView(
+                          padding:
+                              EdgeInsets.only(bottom: 200, top: topPadding),
+                          children: [
+                            Obx(() {
                               if (homeScreenController
-                                  .recentlyPlayed.isNotEmpty)
-                                QuickPicksWidget(
+                                  .recentlyPlayed.isNotEmpty) {
+                                return QuickPicksWidget(
                                   content: QuickPicks(
                                     homeScreenController.recentlyPlayed,
                                     title: "Escuchado Recientemente",
                                   ),
-                                ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
                               if (homeScreenController
-                                  .recentPlaylists.isNotEmpty)
-                                ContentListWidget(
+                                  .recentPlaylists.isNotEmpty) {
+                                return ContentListWidget(
                                   content: PlaylistContent(
                                     playlistList:
                                         homeScreenController.recentPlaylists,
                                     title: "Tus Playlists Recientes",
                                   ),
-                                ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
                               if (homeScreenController
-                                  .recommendations.isNotEmpty)
-                                QuickPicksWidget(
+                                  .recommendations.isNotEmpty) {
+                                return QuickPicksWidget(
                                   content: QuickPicks(
                                     homeScreenController.recommendations,
                                     title: "Recomendaciones",
                                   ),
-                                ),
-                            ],
-                          );
-                        });
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              if (homeScreenController
+                                  .quickPicks.value.songList.isNotEmpty) {
+                                return QuickPicksWidget(
+                                  content: homeScreenController.quickPicks.value,
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              return Column(
+                                children: homeScreenController.middleContent
+                                    .map((content) => ContentListWidget(
+                                          content: content,
+                                        ))
+                                    .toList(),
+                              );
+                            }),
+                            Obx(() {
+                              return Column(
+                                children: homeScreenController.fixedContent
+                                    .map((content) => ContentListWidget(
+                                          content: content,
+                                        ))
+                                    .toList(),
+                              );
+                            }),
+                          ],
+                        );
                       }),
               ),
             ),

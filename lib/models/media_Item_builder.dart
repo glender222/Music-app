@@ -1,9 +1,8 @@
 // ignore_for_file: file_names
 
 import 'package:audio_service/audio_service.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
-import '../models/serializable_video.dart';
-import '../models/thumbnail.dart' as custom_thumbnail;
+import 'serializable_video.dart';
+import 'thumbnail.dart' as custom_thumbnail;
 
 class MediaItemBuilder {
   static MediaItem fromSerializableVideo(SerializableVideo video) {
@@ -12,15 +11,6 @@ class MediaItemBuilder {
       title: video.title,
       artist: video.artist,
       artUri: Uri.parse(video.thumbnailUrl),
-    );
-  }
-
-  static MediaItem fromVideo(Video video) {
-    return MediaItem(
-      id: video.id.value,
-      title: video.title,
-      artist: video.author,
-      artUri: Uri.parse(video.thumbnails.mediumResUrl),
     );
   }
 

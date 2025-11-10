@@ -1,6 +1,5 @@
-import 'package:get/get.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:get/get.dart';
 
 import 'activity_service.dart';
 import 'music_service.dart';
@@ -20,7 +19,8 @@ class RecommendationService {
 
     final topArtist = sortedArtists.first;
 
-    final searchResults = await _musicServices.search(topArtist, filter: 'songs');
+    final searchResults =
+        await _musicServices.search(topArtist, filter: 'songs');
     if (searchResults.containsKey('Songs')) {
       return searchResults['Songs'];
     }

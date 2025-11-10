@@ -11,9 +11,9 @@ import 'package:harmonymusic/utils/helper.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import '../../../base_class/playlist_album_screen_con_base.dart';
 import '../../../mixins/additional_opeartion_mixin.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import '../../../models/album.dart' show Album;
 import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
@@ -52,8 +52,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   AnimationController get animationController => _animationController;
   Animation<double> get scaleAnimation => _scaleAnimation;
   Animation<double> get heightAnimation => _heightAnimation;
-
-  Playlist get currentPlaylist => playlist.value;
   @override
   void onInit() {
     super.onInit();

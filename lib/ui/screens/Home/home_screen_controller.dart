@@ -4,10 +4,10 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
 import '/models/media_Item_builder.dart';
+import '/models/serializable_video.dart';
+import '/services/activity_service.dart';
+import '/services/recommendation_service.dart';
 import '/ui/player/player_controller.dart';
-import '../../../../services/activity_service.dart';
-import '../../../../services/recommendation_service.dart';
-import '../../../../models/serializable_video.dart';
 import '../../../utils/update_check_flag_file.dart';
 import '../../../utils/helper.dart';
 import '/models/album.dart';

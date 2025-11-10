@@ -238,9 +238,9 @@ class PlayerController extends GetxController
         currentSongIndex.value = currentQueue
             .indexWhere((element) => element.id == currentSong.value!.id);
         await _checkFav();
-        await _activityService.addSongToHistory(currentSong.value!);
-        if (currentSong.value!.artist != null) {
-          await _activityService.addArtist(currentSong.value!.artist!);
+        await _activityService.addSongToHistory(mediaItem);
+        if (mediaItem.artist != null) {
+          await _activityService.addArtist(mediaItem.artist!);
         }
         if (isRadioModeOn && (currentSong.value!.id == currentQueue.last.id)) {
           await _addRadioContinuation(radioInitiatorItem!);

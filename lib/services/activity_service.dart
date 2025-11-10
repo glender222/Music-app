@@ -1,5 +1,6 @@
-import 'package:hive/hive.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:hive/hive.dart';
+
 import '../models/serializable_video.dart';
 
 class ActivityService {
