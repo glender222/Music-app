@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:audio_service/audio_service.dart';
 import '../models/serializable_video.dart';
 
 class ActivityService {
@@ -13,15 +13,15 @@ class ActivityService {
     await Hive.openBox(_artistsBoxName);
   }
 
-  Future<void> addSongToHistory(Video video) async {
+  Future<void> addSongToHistory(MediaItem mediaItem) async {
     final box = Hive.box(_historyBoxName);
     final serializableVideo = SerializableVideo(
-      id: video.id.value,
-      title: video.title,
-      artist: video.author,
-      thumbnailUrl: video.thumbnails.mediumResUrl,
+      id: mediaItem.id,
+      title: mediaItem.title,
+      artist: mediaItem.artist ?? '',
+      thumbnailUrl: mediaItem.artUri.toString(),
     );
-    await box.put(video.id.value, serializableVideo.toJson());
+    await box.put(mediaItem.id, serializableVideo.toJson());
   }
 
   List<SerializableVideo> getSongHistory() {
@@ -31,14 +31,14 @@ class ActivityService {
         .toList();
   }
 
-  Future<void> addPlaylist(String playlistName, List<Video> songs) async {
+  Future<void> addPlaylist(String playlistName, List<MediaItem> songs) async {
     final box = Hive.box(_playlistsBoxName);
     final songsJson = songs
         .map((song) => SerializableVideo(
-              id: song.id.value,
+              id: song.id,
               title: song.title,
-              artist: song.author,
-              thumbnailUrl: song.thumbnails.mediumResUrl,
+              artist: song.artist ?? '',
+              thumbnailUrl: song.artUri.toString(),
             ).toJson())
         .toList();
     await box.put(playlistName, songsJson);

@@ -11,6 +11,8 @@ import '../Search/search_screen.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/player/player_controller.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
+import '../../../models/playlist.dart';
+import '../../../models/quick_picks.dart';
 import '../../navigator.dart';
 import '../../widgets/content_list_widget.dart';
 import '../../widgets/quickpickswidget.dart';
@@ -205,15 +207,9 @@ class Body extends StatelessWidget {
                             children: [
                               if (homeScreenController
                                   .recentlyPlayed.isNotEmpty)
-                                ContentListWidget(
-                                  content: PlaylistContent(
-                                    playlistList: [
-                                      Playlist(
-                                        title: "Escuchado Recientemente",
-                                        songList: homeScreenController
-                                            .recentlyPlayed,
-                                      )
-                                    ],
+                                QuickPicksWidget(
+                                  content: QuickPicks(
+                                    homeScreenController.recentlyPlayed,
                                     title: "Escuchado Recientemente",
                                   ),
                                 ),
@@ -228,15 +224,9 @@ class Body extends StatelessWidget {
                                 ),
                               if (homeScreenController
                                   .recommendations.isNotEmpty)
-                                ContentListWidget(
-                                  content: PlaylistContent(
-                                    playlistList: [
-                                      Playlist(
-                                        title: "Recomendaciones",
-                                        songList: homeScreenController
-                                            .recommendations,
-                                      )
-                                    ],
+                                QuickPicksWidget(
+                                  content: QuickPicks(
+                                    homeScreenController.recommendations,
                                     title: "Recomendaciones",
                                   ),
                                 ),

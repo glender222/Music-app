@@ -3,7 +3,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../models/serializable_video.dart';
-import '../models/thumbnail.dart';
+import '../models/thumbnail.dart' as custom_thumbnail;
 
 class MediaItemBuilder {
   static MediaItem fromSerializableVideo(SerializableVideo video) {
@@ -46,7 +46,8 @@ class MediaItemBuilder {
             : toDuration(json['length']),
         album: album != null ? album['name'] : null,
         artist: artistName,
-        artUri: Uri.parse(Thumbnail(json["thumbnails"][0]['url']).high),
+        artUri: Uri.parse(
+            custom_thumbnail.Thumbnail(json["thumbnails"][0]['url']).high),
         extras: {
           'url': json['url'] ?? url,
           'length': json['length'],

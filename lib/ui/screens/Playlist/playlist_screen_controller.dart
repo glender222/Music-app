@@ -214,7 +214,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     _updatePlaylistThumbSongBased();
 
     if (isAddedToLibrary.value) {
-      _activityService.addPlaylist(playlist.value.title, songList.cast<Video>().toList());
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
   }
 
@@ -266,7 +266,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     _updatePlaylistThumbSongBased();
 
     if (isAddedToLibrary.value) {
-      _activityService.addPlaylist(playlist.value.title, songList.cast<Video>().toList());
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
   }
 

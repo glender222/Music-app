@@ -2,11 +2,11 @@ import 'package:get/get.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'activity_service.dart';
-import 'piped_service.dart';
+import 'music_service.dart';
 
 class RecommendationService {
   final ActivityService _activityService = Get.find<ActivityService>();
-  final PipedServices _pipedServices = Get.find<PipedServices>();
+  final MusicServices _musicServices = Get.find<MusicServices>();
 
   Future<List<Video>> getRecommendations() async {
     final artistCounts = _activityService.getArtistCounts();
@@ -19,7 +19,13 @@ class RecommendationService {
 
     final topArtist = sortedArtists.first;
 
-    final searchResults = await _pipedServices.search(topArtist);
-    return searchResults.videos;
+    final searchResults = await _musicServices.searchSong(topArtist);
+    if (searchResults.isNotEmpty) {
+      final firstResult = searchResults.first;
+      if (firstResult is Video) {
+        return searchResults.cast<Video>().toList();
+      }
+    }
+    return [];
   }
 }

@@ -61,10 +61,7 @@ class HomeScreenController extends GetxController {
           .map((entry) => Playlist(
                 playlistId: entry.key,
                 title: entry.key,
-                songList: entry.value
-                    .map((video) =>
-                        MediaItemBuilder.fromSerializableVideo(video))
-                    .toList(),
+                thumbnailUrl: entry.value.first.thumbnailUrl,
               ))
           .toList();
       this.recommendations.value = recommendations
