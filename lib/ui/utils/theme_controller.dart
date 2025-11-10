@@ -182,42 +182,51 @@ class ThemeController extends GetxController {
       final baseTheme = ThemeData(
           useMaterial3: false,
           brightness: Brightness.dark,
+          scaffoldBackgroundColor: Colors.black,
           canvasColor: Colors.black,
           primaryColor: Colors.black,
           primaryColorDark: Colors.black,
-          primaryColorLight: Colors.grey[850],
+          primaryColorLight: Colors.grey[900],
           colorScheme: ColorScheme.fromSwatch(
-              accentColor: Colors.grey[700], brightness: Brightness.dark),
+              accentColor: primaryColor.value ?? Colors.deepPurple[400],
+              brightness: Brightness.dark),
           progressIndicatorTheme: ProgressIndicatorThemeData(
-              color: Colors.grey[700], linearTrackColor: Colors.white),
+              color: primaryColor.value ?? Colors.deepPurple[400],
+              linearTrackColor: Colors.white70),
           textTheme: const TextTheme(
-              titleLarge: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.bold,
-              ),
-              titleMedium: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-              titleSmall: TextStyle(),
-              labelMedium: TextStyle(
+            titleLarge: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            titleMedium: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            titleSmall: TextStyle(color: Colors.white70),
+            labelMedium: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 23,
-              ),
-              labelSmall: TextStyle(
-                  fontSize: 15, letterSpacing: 0, fontWeight: FontWeight.bold),
-              bodyMedium: TextStyle(color: Colors.grey)),
+                color: Colors.white),
+            labelSmall: TextStyle(
+                fontSize: 15,
+                letterSpacing: 0,
+                fontWeight: FontWeight.bold,
+                color: Colors.white),
+            bodyMedium: TextStyle(color: Colors.white70),
+          ),
           navigationRailTheme: const NavigationRailThemeData(
               backgroundColor: Colors.black,
               selectedIconTheme: IconThemeData(
                 color: Colors.white,
               ),
-              unselectedIconTheme: IconThemeData(color: Colors.white38),
+              unselectedIconTheme: IconThemeData(color: Colors.white54),
               selectedLabelTextStyle: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 15),
               unselectedLabelTextStyle: TextStyle(
-                  color: Colors.white38, fontWeight: FontWeight.bold)),
+                  color: Colors.white54, fontWeight: FontWeight.bold)),
           bottomSheetTheme: const BottomSheetThemeData(
               backgroundColor: Colors.black, modalBarrierColor: Colors.black),
           sliderTheme: const SliderThemeData(
@@ -230,13 +239,16 @@ class ThemeController extends GetxController {
             thumbColor: Colors.white,
           ),
           textSelectionTheme: TextSelectionThemeData(
-              cursorColor: Colors.grey[700],
-              selectionColor: Colors.grey[700],
-              selectionHandleColor: Colors.grey[700]),
-          inputDecorationTheme: const InputDecorationTheme(
-              focusColor: Colors.white,
+              cursorColor: primaryColor.value ?? Colors.deepPurple[400],
+              selectionColor: primaryColor.value ?? Colors.deepPurple[400],
+              selectionHandleColor:
+                  primaryColor.value ?? Colors.deepPurple[400]),
+          inputDecorationTheme: InputDecorationTheme(
+              focusColor: primaryColor.value ?? Colors.deepPurple[400],
               focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white))));
+                  borderSide: BorderSide(
+                      color:
+                          primaryColor.value ?? Colors.deepPurple[400]!))));
       return baseTheme.copyWith(
           textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme));
     } else {
@@ -251,64 +263,73 @@ class ThemeController extends GetxController {
             systemNavigationBarContrastEnforced: false),
       );
       final baseTheme = ThemeData(
-          useMaterial3: false,
-          brightness: Brightness.light,
-          canvasColor: Colors.white,
-          colorScheme: ColorScheme.fromSwatch(
-              accentColor: Colors.grey[400],
-              backgroundColor: Colors.white,
-              cardColor: Colors.white,
-              brightness: Brightness.light),
-          primaryColor: Colors.white,
-          primaryColorLight: Colors.grey[300],
-          progressIndicatorTheme: ProgressIndicatorThemeData(
-              linearTrackColor: Colors.grey[700], color: Colors.grey[400]),
-          textTheme: TextTheme(
-              titleLarge: const TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.bold,
-              ),
-              titleMedium: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-              titleSmall: const TextStyle(),
-              labelMedium: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 23,
-              ),
-              labelSmall: const TextStyle(
-                  fontSize: 15, letterSpacing: 0, fontWeight: FontWeight.bold),
-              bodyMedium: TextStyle(color: Colors.grey[700])),
-          navigationRailTheme: NavigationRailThemeData(
-              backgroundColor: Colors.white,
-              selectedIconTheme: const IconThemeData(color: Colors.black),
-              unselectedIconTheme: IconThemeData(color: Colors.grey[800]),
-              selectedLabelTextStyle: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15),
-              unselectedLabelTextStyle: TextStyle(
-                  color: Colors.grey[800], fontWeight: FontWeight.bold)),
-          bottomSheetTheme: const BottomSheetThemeData(
-              backgroundColor: Colors.white, modalBarrierColor: Colors.white),
-          sliderTheme: SliderThemeData(
-            //base bar color
-            inactiveTrackColor: Colors.black38,
-            //buffered progress
-            activeTrackColor: Colors.grey[800],
-            //progress bar color
-            valueIndicatorColor: Colors.white38,
-            thumbColor: Colors.grey[800],
+        useMaterial3: false,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFFFFFF0),
+        canvasColor: const Color(0xFFFFFFF0),
+        primaryColor: const Color(0xFFFFFFF0),
+        primaryColorLight: Colors.grey[400],
+        primaryColorDark: Colors.grey[800],
+        cardColor: Colors.white,
+        colorScheme: ColorScheme.fromSwatch(
+            accentColor: primaryColor.value ?? Colors.deepPurple[400],
+            brightness: Brightness.light),
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+            linearTrackColor: Colors.black54,
+            color: primaryColor.value ?? Colors.deepPurple[400]),
+        textTheme: TextTheme(
+          titleLarge: const TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
           ),
-          textSelectionTheme: TextSelectionThemeData(
-              cursorColor: Colors.grey[400],
-              selectionColor: Colors.grey[400],
-              selectionHandleColor: Colors.grey[400]),
-          dialogTheme: DialogTheme(backgroundColor: Colors.grey[200]),
-          inputDecorationTheme: const InputDecorationTheme(
-              focusColor: Colors.black,
-              focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black))));
+          titleMedium: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+          titleSmall: TextStyle(color: Colors.grey[800]),
+          labelMedium: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 23,
+            color: Colors.black,
+          ),
+          labelSmall: TextStyle(
+              fontSize: 15,
+              letterSpacing: 0,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800]),
+          bodyMedium: TextStyle(color: Colors.grey[850]),
+        ),
+        navigationRailTheme: NavigationRailThemeData(
+            backgroundColor: const Color(0xFFFFFFF0),
+            selectedIconTheme: const IconThemeData(color: Colors.black),
+            unselectedIconTheme: IconThemeData(color: Colors.grey[700]),
+            selectedLabelTextStyle: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 15),
+            unselectedLabelTextStyle: TextStyle(
+                color: Colors.grey[700], fontWeight: FontWeight.bold)),
+        bottomSheetTheme: const BottomSheetThemeData(
+            backgroundColor: Color(0xFFFFFFF0),
+            modalBarrierColor: Color(0xFFFFFFF0)),
+        sliderTheme: SliderThemeData(
+          inactiveTrackColor: Colors.black26,
+          activeTrackColor: Colors.grey[700],
+          thumbColor: Colors.grey[800],
+        ),
+        textSelectionTheme: TextSelectionThemeData(
+            cursorColor: primaryColor.value ?? Colors.deepPurple[400],
+            selectionColor: primaryColor.value ?? Colors.deepPurple[400],
+            selectionHandleColor:
+                primaryColor.value ?? Colors.deepPurple[400]),
+        dialogTheme: DialogTheme(backgroundColor: Colors.grey[200]),
+        inputDecorationTheme: InputDecorationTheme(
+            focusColor: primaryColor.value ?? Colors.deepPurple[400],
+            focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(
+                    color: primaryColor.value ?? Colors.deepPurple[400]!))),
+      );
       return baseTheme.copyWith(
           textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme));
     }
