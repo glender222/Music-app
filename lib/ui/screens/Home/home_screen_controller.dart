@@ -61,12 +61,12 @@ class HomeScreenController extends GetxController {
           .map((entry) => Playlist(
                 playlistId: entry.key,
                 title: entry.key,
-                thumbnailUrl: entry.value.first.thumbnailUrl,
+                thumbnailUrl: entry.value.isNotEmpty
+                    ? entry.value.first.thumbnailUrl
+                    : Playlist.thumbPlaceholderUrl,
               ))
           .toList();
-      this.recommendations.value = recommendations
-          .map((video) => MediaItemBuilder.fromVideo(video))
-          .toList();
+      this.recommendations.value = recommendations;
       isContentFetched.value = true;
     }
   }

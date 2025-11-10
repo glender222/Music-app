@@ -180,7 +180,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
         final id = content.playlistId;
         if (add) {
           box.put(id, content.toJson());
-          _activityService.addPlaylist(content.title, songList);
+          _activityService.addPlaylist(content.title, songList.toList());
           updateSongsIntoDb();
         } else {
           box.delete(id);
@@ -242,6 +242,10 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     // Update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
+
+    if (isAddedToLibrary.value) {
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
+    }
   }
 
   void addNRemoveItemsinList(MediaItem? item,
