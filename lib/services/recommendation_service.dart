@@ -22,7 +22,9 @@ class RecommendationService {
     final searchResults =
         await _musicServices.search(topArtist, filter: 'songs');
     if (searchResults.containsKey('Songs')) {
-      return searchResults['Songs'];
+      return (searchResults['Songs'] as List)
+          .map((song) => song as MediaItem)
+          .toList();
     }
     return [];
   }
