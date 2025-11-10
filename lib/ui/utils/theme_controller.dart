@@ -283,6 +283,7 @@ class ThemeController extends GetxController {
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
+<<<<<<< HEAD
           titleMedium: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -330,6 +331,17 @@ class ThemeController extends GetxController {
                 borderSide: BorderSide(
                     color: primaryColor.value ?? Colors.deepPurple[400]!))),
       );
+=======
+          textSelectionTheme: TextSelectionThemeData(
+              cursorColor: Colors.grey[400],
+              selectionColor: Colors.grey[400],
+              selectionHandleColor: Colors.grey[400]),
+          dialogTheme: DialogThemeData(backgroundColor: Colors.grey[200]),
+          inputDecorationTheme: const InputDecorationTheme(
+              focusColor: Colors.black,
+              focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black))));
+>>>>>>> 9b00879 (nombre color cambiao)
       return baseTheme.copyWith(
           textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme));
     }
