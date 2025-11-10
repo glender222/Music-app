@@ -18,6 +18,7 @@ import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
 import '../../../services/music_service.dart';
 import '../../../services/piped_service.dart';
+import '../../../services/activity_service.dart';
 import '../Home/home_screen_controller.dart';
 import '../Library/library_controller.dart';
 
@@ -27,6 +28,7 @@ import '../Library/library_controller.dart';
 class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     with AdditionalOpeartionMixin, GetSingleTickerProviderStateMixin {
   final MusicServices _musicServices = Get.find<MusicServices>();
+  final ActivityService _activityService = Get.find<ActivityService>();
   final playlist = Playlist(
     title: "",
     playlistId: "",
@@ -175,6 +177,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
         final id = content.playlistId;
         if (add) {
           box.put(id, content.toJson());
+          _activityService.addPlaylist(content.title, songList.toList());
           updateSongsIntoDb();
         } else {
           box.delete(id);
@@ -207,6 +210,10 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     // Update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
+
+    if (isAddedToLibrary.value) {
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
+    }
   }
 
   @override
@@ -232,6 +239,10 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     // Update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
+
+    if (isAddedToLibrary.value) {
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
+    }
   }
 
   void addNRemoveItemsinList(MediaItem? item,
@@ -255,6 +266,10 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     // update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
+
+    if (isAddedToLibrary.value) {
+      _activityService.addPlaylist(playlist.value.title, songList.toList());
+    }
   }
 
   @override

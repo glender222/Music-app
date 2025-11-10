@@ -1,9 +1,19 @@
 // ignore_for_file: file_names
 
 import 'package:audio_service/audio_service.dart';
-import '../models/thumbnail.dart';
+import 'serializable_video.dart';
+import 'thumbnail.dart' as custom_thumbnail;
 
 class MediaItemBuilder {
+  static MediaItem fromSerializableVideo(SerializableVideo video) {
+    return MediaItem(
+      id: video.id,
+      title: video.title,
+      artist: video.artist,
+      artUri: Uri.parse(video.thumbnailUrl),
+    );
+  }
+
   static MediaItem fromJson(dynamic json, {String? url}) {
     String? artistName;
     if (json['artists'] != null) {
@@ -26,7 +36,8 @@ class MediaItemBuilder {
             : toDuration(json['length']),
         album: album != null ? album['name'] : null,
         artist: artistName,
-        artUri: Uri.parse(Thumbnail(json["thumbnails"][0]['url']).high),
+        artUri: Uri.parse(
+            custom_thumbnail.Thumbnail(json["thumbnails"][0]['url']).high),
         extras: {
           'url': json['url'] ?? url,
           'length': json['length'],

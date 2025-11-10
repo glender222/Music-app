@@ -10,6 +10,8 @@ import '../Library/library.dart';
 import '../Search/search_screen.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/player/player_controller.dart';
+import '/models/playlist.dart';
+import '/models/quick_picks.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
 import '../../navigator.dart';
 import '../../widgets/content_list_widget.dart';
@@ -193,33 +195,78 @@ class Body extends StatelessWidget {
                         ),
                       )
                     : Obx(() {
-                        // dispose all detachached scroll controllers
-                        homeScreenController.disposeDetachedScrollControllers();
-                        final items = homeScreenController
-                                .isContentFetched.value
-                            ? [
-                                Obx(() {
-                                  final scrollController = ScrollController();
-                                  homeScreenController.contentScrollControllers
-                                      .add(scrollController);
-                                  return QuickPicksWidget(
-                                      content:
-                                          homeScreenController.quickPicks.value,
-                                      scrollController: scrollController);
-                                }),
-                                ...getWidgetList(
-                                    homeScreenController.middleContent,
-                                    homeScreenController),
-                                ...getWidgetList(
-                                    homeScreenController.fixedContent,
-                                    homeScreenController)
-                              ]
-                            : [const HomeShimmer()];
-                        return ListView.builder(
+                        if (!homeScreenController.isContentFetched.value) {
+                          return const HomeShimmer();
+                        }
+                        return ListView(
                           padding:
                               EdgeInsets.only(bottom: 200, top: topPadding),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) => items[index],
+                          children: [
+                            Obx(() {
+                              if (homeScreenController
+                                  .recentlyPlayed.isNotEmpty) {
+                                return QuickPicksWidget(
+                                  content: QuickPicks(
+                                    homeScreenController.recentlyPlayed,
+                                    title: "Escuchado Recientemente",
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              if (homeScreenController
+                                  .recentPlaylists.isNotEmpty) {
+                                return ContentListWidget(
+                                  content: PlaylistContent(
+                                    playlistList:
+                                        homeScreenController.recentPlaylists,
+                                    title: "Tus Playlists Recientes",
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              if (homeScreenController
+                                  .recommendations.isNotEmpty) {
+                                return QuickPicksWidget(
+                                  content: QuickPicks(
+                                    homeScreenController.recommendations,
+                                    title: "Recomendaciones",
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              if (homeScreenController
+                                  .quickPicks.value.songList.isNotEmpty) {
+                                return QuickPicksWidget(
+                                  content: homeScreenController.quickPicks.value,
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            }),
+                            Obx(() {
+                              return Column(
+                                children: homeScreenController.middleContent
+                                    .map((content) => ContentListWidget(
+                                          content: content,
+                                        ))
+                                    .toList(),
+                              );
+                            }),
+                            Obx(() {
+                              return Column(
+                                children: homeScreenController.fixedContent
+                                    .map((content) => ContentListWidget(
+                                          content: content,
+                                        ))
+                                    .toList(),
+                              );
+                            }),
+                          ],
                         );
                       }),
               ),
@@ -262,18 +309,5 @@ class Body extends StatelessWidget {
         child: Text("${homeScreenController.tabIndex.value}"),
       );
     }
-  }
-
-  List<Widget> getWidgetList(
-      dynamic list, HomeScreenController homeScreenController) {
-    return list
-        .map((content) {
-          final scrollController = ScrollController();
-          homeScreenController.contentScrollControllers.add(scrollController);
-          return ContentListWidget(
-              content: content, scrollController: scrollController);
-        })
-        .whereType<Widget>()
-        .toList();
   }
 }
