@@ -11,6 +11,7 @@ import 'screens/Playlist/playlist_screen.dart';
 import 'screens/Search/search_result_screen.dart';
 import 'screens/Search/search_screen.dart';
 import '../../presentation/bindings/search_clean_binding.dart';
+import '../../presentation/bindings/playlist_clean_binding.dart';
 
 class ScreenNavigationSetup {
   ScreenNavigationSetup._();
@@ -54,6 +55,7 @@ class ScreenNavigation extends StatelessWidget {
                   page: () => PlaylistScreen(
                         key: Key(id),
                       ),
+                  binding: PlaylistCleanBinding(),
                   settings: settings);
             
             case ScreenNavigationSetup.searchScreen:

@@ -6,9 +6,9 @@ import 'package:audio_service/audio_service.dart';
 
 class SearchResultModel extends SearchResultEntity {
   SearchResultModel({
-    required List<AlbumModel> albums,
-    required List<ArtistModel> artists,
-    required List<PlaylistModel> playlists,
+    required List<AlbumSummaryModel> albums,
+    required List<ArtistSummaryModel> artists,
+    required List<PlaylistSummaryModel> playlists,
     required List<SongModel> songs,
     required List<VideoModel> videos,
   }) : super(
@@ -21,13 +21,13 @@ class SearchResultModel extends SearchResultEntity {
   factory SearchResultModel.fromJson(Map<String, dynamic> json) {
     return SearchResultModel(
       albums: (json['Albums'] as List? ?? [])
-          .map((e) => AlbumModel.fromAlbum(e as Album))
+          .map((e) => AlbumSummaryModel.fromAlbum(e as Album))
           .toList(),
       artists: (json['Artists'] as List? ?? [])
-          .map((e) => ArtistModel.fromArtist(e as Artist))
+          .map((e) => ArtistSummaryModel.fromArtist(e as Artist))
           .toList(),
       playlists: (json['Playlists'] as List? ?? [])
-          .map((e) => PlaylistModel.fromPlaylist(e as Playlist))
+          .map((e) => PlaylistSummaryModel.fromPlaylist(e as Playlist))
           .toList(),
       songs: (json['Songs'] as List? ?? [])
           .map((e) => SongModel.fromMediaItem(e as MediaItem))
@@ -39,34 +39,36 @@ class SearchResultModel extends SearchResultEntity {
   }
 }
 
-class AlbumModel extends AlbumEntity {
-  AlbumModel({
+class AlbumSummaryModel extends AlbumSummaryEntity {
+  AlbumSummaryModel({
     required super.browseId,
     required super.title,
     super.year,
     required super.thumbnailUrl,
-  });
+    List<ArtistSummaryEntity>? artists,
+  }) : super(artists: artists);
 
-  factory AlbumModel.fromAlbum(Album album) {
-    return AlbumModel(
+  factory AlbumSummaryModel.fromAlbum(Album album) {
+    return AlbumSummaryModel(
       browseId: album.browseId,
       title: album.title,
       year: album.year,
       thumbnailUrl: album.thumbnailUrl,
+      artists: album.artists?.map((artist) => ArtistSummaryModel.fromArtist(Artist.fromJson(artist))).toList(),
     );
   }
 }
 
-class ArtistModel extends ArtistEntity {
-  ArtistModel({
+class ArtistSummaryModel extends ArtistSummaryEntity {
+  ArtistSummaryModel({
     required super.browseId,
     required super.name,
     super.subscribers,
     required super.thumbnailUrl,
   });
 
-  factory ArtistModel.fromArtist(Artist artist) {
-    return ArtistModel(
+  factory ArtistSummaryModel.fromArtist(Artist artist) {
+    return ArtistSummaryModel(
       browseId: artist.browseId,
       name: artist.name,
       subscribers: artist.subscribers,
@@ -75,16 +77,16 @@ class ArtistModel extends ArtistEntity {
   }
 }
 
-class PlaylistModel extends PlaylistEntity {
-  PlaylistModel({
+class PlaylistSummaryModel extends PlaylistSummaryEntity {
+  PlaylistSummaryModel({
     required super.browseId,
     required super.title,
     super.songCount,
     required super.thumbnailUrl,
   });
 
-  factory PlaylistModel.fromPlaylist(Playlist playlist) {
-    return PlaylistModel(
+  factory PlaylistSummaryModel.fromPlaylist(Playlist playlist) {
+    return PlaylistSummaryModel(
       browseId: playlist.playlistId,
       title: playlist.title,
       songCount: playlist.songCount,

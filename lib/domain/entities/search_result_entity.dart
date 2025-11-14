@@ -1,7 +1,7 @@
 class SearchResultEntity {
-  final List<AlbumEntity> albums;
-  final List<ArtistEntity> artists;
-  final List<PlaylistEntity> playlists;
+  final List<AlbumSummaryEntity> albums;
+  final List<ArtistSummaryEntity> artists;
+  final List<PlaylistSummaryEntity> playlists;
   final List<SongEntity> songs;
   final List<VideoEntity> videos;
 
@@ -14,14 +14,14 @@ class SearchResultEntity {
   });
 }
 
-class AlbumEntity {
+class AlbumSummaryEntity {
   final String browseId;
   final String title;
   final String? year;
   final String thumbnailUrl;
-  final List<ArtistEntity>? artists;
+  final List<ArtistSummaryEntity>? artists;
 
-  AlbumEntity({
+  AlbumSummaryEntity({
     required this.browseId,
     required this.title,
     this.year,
@@ -30,13 +30,13 @@ class AlbumEntity {
   });
 }
 
-class ArtistEntity {
+class ArtistSummaryEntity {
   final String browseId;
   final String name;
   final String? subscribers;
   final String thumbnailUrl;
 
-  ArtistEntity({
+  ArtistSummaryEntity({
     required this.browseId,
     required this.name,
     this.subscribers,
@@ -44,13 +44,13 @@ class ArtistEntity {
   });
 }
 
-class PlaylistEntity {
+class PlaylistSummaryEntity {
   final String browseId;
   final String title;
   final String? songCount;
   final String thumbnailUrl;
 
-  PlaylistEntity({
+  PlaylistSummaryEntity({
     required this.browseId,
     required this.title,
     this.songCount,
