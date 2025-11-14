@@ -8,14 +8,22 @@ import '../../widgets/animated_screen_transition.dart';
 import '../../widgets/loader.dart';
 import '../../widgets/search_related_widgets.dart';
 import '../../widgets/separate_tab_item_widget.dart';
+import 'package:harmonymusic/presentation/controllers/search_clean_controller.dart';
 import 'search_result_screen_controller.dart';
 
-class SearchResultScreen extends StatelessWidget {
+class SearchResultScreen extends GetView<SearchCleanController> {
   const SearchResultScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final searchResScrController = Get.put(SearchResultScreenController());
+
+    // Trigger the search when the widget is built
+    final args = Get.arguments;
+    if (args != null && controller.searchResult.value == null) {
+      controller.search(args);
+    }
+
     return GetPlatform.isDesktop ||
             Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
         ? const SearchResultScreenBN()
@@ -32,12 +40,11 @@ class SearchResultScreen extends StatelessWidget {
                           onDestinationSelected:
                               searchResScrController.onDestinationSelected,
                           minWidth: 60,
-                          destinations: (searchResScrController
-                                      .isResultContentFetced.value &&
-                                  searchResScrController.railItems.isNotEmpty)
+                          destinations: (controller.searchResult.value != null &&
+                                  controller.railItems.isNotEmpty)
                               ? [
                                   railDestination("results".tr),
-                                  ...(searchResScrController.railItems.map(
+                                  ...(controller.railItems.map(
                                       (element) => railDestination(element))),
                                 ]
                               : [
@@ -117,10 +124,20 @@ class Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cleanController = Get.find<SearchCleanController>();
+
     if (searchResScrController.navigationRailCurrentIndex.value == 0) {
       return Obx(() {
-        if (searchResScrController.isResultContentFetced.isTrue &&
-            searchResScrController.railItems.isEmpty) {
+        if (cleanController.isLoading.value) {
+          return const Center(child: LoadingIndicator());
+        }
+
+        if (cleanController.errorMessage.value.isNotEmpty) {
+          return Center(child: Text(cleanController.errorMessage.value));
+        }
+
+        final searchResult = cleanController.searchResult.value;
+        if (searchResult == null) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -133,18 +150,18 @@ class Body extends StatelessWidget {
               ],
             ),
           );
-        } else if (searchResScrController.isResultContentFetced.isTrue) {
-          return const ResultWidget();
-        } else {
-          return const Center(
-            child: LoadingIndicator(),
-          );
         }
+
+        return ResultWidget(
+          searchResult: searchResult,
+          queryString: searchResScrController.queryString.value,
+        );
       });
     } else {
-      if (searchResScrController.isResultContentFetced.isTrue) {
+      // Logic for other tabs remains unchanged for now
+      if (cleanController.searchResult.value != null) {
         final topPadding = context.isLandscape ? 50.0 : 80.0;
-        final name = searchResScrController.railItems[
+        final name = cleanController.railItems[
             searchResScrController.navigationRailCurrentIndex.value - 1];
         return SeparateTabItemWidget(
           items: const [],

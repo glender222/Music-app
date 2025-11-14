@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:harmonymusic/presentation/controllers/search_clean_controller.dart';
 import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
 
 import '../../../utils/helper.dart';
@@ -10,14 +11,10 @@ import '/ui/widgets/sort_widget.dart';
 class SearchResultScreenController extends GetxController
     with GetTickerProviderStateMixin {
   final navigationRailCurrentIndex = 0.obs;
-  final isResultContentFetced = false.obs;
   final isSeparatedResultContentFetced = false.obs;
-  final resultContent = <String, dynamic>{}.obs;
   final separatedResultContent = <String, dynamic>{}.obs;
   final musicServices = Get.find<MusicServices>();
   final queryString = ''.obs;
-  final railItems = <String>[].obs;
-  final railitemHeight = Get.size.height.obs;
   final additionalParamNext = {};
   bool continuationInProgress = false;
   TabController? tabController;
@@ -25,15 +22,51 @@ class SearchResultScreenController extends GetxController
   //ScrollContollers List
   final Map<String, ScrollController> scrollControllers = {};
 
+  late final SearchCleanController _searchCleanController;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _searchCleanController = Get.find<SearchCleanController>();
+    // Listen to changes in railItems from the clean controller
+    ever(_searchCleanController.railItems, _handleRailItemsChanged);
+  }
+
   @override
   void onReady() {
-    _getInitSearchResult();
+    _initialize();
     Get.find<HomeScreenController>().whenHomeScreenOnTop();
     super.onReady();
   }
 
+  void _handleRailItemsChanged(List<String> newRailItems) {
+    // Dispose the old controller if it exists
+    tabController?.dispose();
+
+    // Initialize a new TabController
+    tabController = TabController(length: newRailItems.length + 1, vsync: this);
+    tabController?.animation?.addListener(_handleTabAnimation);
+
+    // Initialize scroll controllers for the new items
+    for (String item in newRailItems) {
+      if (!scrollControllers.containsKey(item)) {
+        scrollControllers[item] = ScrollController();
+      }
+    }
+  }
+
+  void _handleTabAnimation() {
+    int indexChange = tabController!.offset.round();
+    int index = tabController!.index + indexChange;
+
+    if (index != navigationRailCurrentIndex.value) {
+      onDestinationSelected(index, ignoreTabCommand: true);
+    }
+  }
+
   Future<void> onDestinationSelected(int value,
       {bool ignoreTabCommand = false}) async {
+    final railItems = _searchCleanController.railItems;
     if (railItems.isEmpty) {
       return;
     }
@@ -53,7 +86,7 @@ class SearchResultScreenController extends GetxController
       final tabName = railItems[value - 1];
       final itemCount = (tabName == 'Songs' || tabName == 'Videos') ? 25 : 10;
       final x = await musicServices.search(queryString.value,
-          filter: tabName.replaceAll(" ", "_").toLowerCase(), limit: itemCount, filterParams: resultContent['searchEndpoint'][tabName]);
+          filter: tabName.replaceAll(" ", "_").toLowerCase(), limit: itemCount);
       separatedResultContent[tabName] = x[tabName];
       additionalParamNext[tabName] = x['params'];
       isSeparatedResultContentFetced.value = true;
@@ -76,6 +109,7 @@ class SearchResultScreenController extends GetxController
   }
 
   Future<void> getContinuationContents() async {
+    final railItems = _searchCleanController.railItems;
     final tabName = railItems[navigationRailCurrentIndex.value - 1];
 
     final x =
@@ -88,57 +122,14 @@ class SearchResultScreenController extends GetxController
   }
 
   void viewAllCallback(String text) {
+    final railItems = _searchCleanController.railItems;
     onDestinationSelected(railItems.indexOf(text) + 1);
   }
 
-  Future<void> _getInitSearchResult() async {
-    isResultContentFetced.value = false;
+  void _initialize() {
     final args = Get.arguments;
     if (args != null) {
       queryString.value = args;
-      resultContent.value = await musicServices.search(args);
-      final allKeys = resultContent.keys.where((element) => ([
-            "Songs",
-            "Videos",
-            "Albums",
-            "Featured playlists",
-            "Community playlists",
-            "Artists"
-          ]).contains(element));
-      railItems.value = List<String>.from(allKeys);
-      final len =
-          railItems.where((element) => element.contains("playlists")).length;
-      final calH = 30 + (railItems.length + 1 - len) * 123 + len * 150.0;
-      railitemHeight.value =
-          calH >= railitemHeight.value ? calH : railitemHeight.value;
-
-      //ScrollControlers for list Continuation callback implementarion
-      for (String item in railItems) {
-        scrollControllers[item] = ScrollController();
-      }
-
-      //Case if bottom nav used
-      if (GetPlatform.isDesktop ||
-          Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
-        // assiging init val
-        for (var element in railItems) {
-          separatedResultContent[element] = [];
-        }
-
-        //tab controller for v2
-        tabController =
-            TabController(length: railItems.length + 1, vsync: this);
-
-        tabController?.animation?.addListener(() {
-          int indexChange = tabController!.offset.round();
-          int index = tabController!.index + indexChange;
-
-          if (index != navigationRailCurrentIndex.value) {
-            onDestinationSelected(index, ignoreTabCommand: true);
-          }
-        });
-      }
-      isResultContentFetced.value = true;
     }
   }
 
@@ -164,10 +155,11 @@ class SearchResultScreenController extends GetxController
 
   @override
   void onClose() {
-    for (String item in railItems) {
-      (scrollControllers[item])!.dispose();
+    for (var controller in scrollControllers.values) {
+      controller.dispose();
     }
     Get.find<HomeScreenController>().whenHomeScreenOnTop();
+    tabController?.removeListener(_handleTabAnimation);
     tabController?.dispose();
     super.onClose();
   }
