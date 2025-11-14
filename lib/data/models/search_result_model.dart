@@ -41,15 +41,11 @@ class SearchResultModel extends SearchResultEntity {
 
 class AlbumModel extends AlbumEntity {
   AlbumModel({
-    required String browseId,
-    required String title,
-    String? year,
-    required String thumbnailUrl,
-  }) : super(
-            browseId: browseId,
-            title: title,
-            year: year,
-            thumbnailUrl: thumbnailUrl);
+    required super.browseId,
+    required super.title,
+    super.year,
+    required super.thumbnailUrl,
+  });
 
   factory AlbumModel.fromAlbum(Album album) {
     return AlbumModel(
@@ -63,15 +59,11 @@ class AlbumModel extends AlbumEntity {
 
 class ArtistModel extends ArtistEntity {
   ArtistModel({
-    required String browseId,
-    required String name,
-    String? subscribers,
-    required String thumbnailUrl,
-  }) : super(
-            browseId: browseId,
-            name: name,
-            subscribers: subscribers,
-            thumbnailUrl: thumbnailUrl);
+    required super.browseId,
+    required super.name,
+    super.subscribers,
+    required super.thumbnailUrl,
+  });
 
   factory ArtistModel.fromArtist(Artist artist) {
     return ArtistModel(
@@ -85,15 +77,11 @@ class ArtistModel extends ArtistEntity {
 
 class PlaylistModel extends PlaylistEntity {
   PlaylistModel({
-    required String browseId,
-    required String title,
-    String? songCount,
-    required String thumbnailUrl,
-  }) : super(
-            browseId: browseId,
-            title: title,
-            songCount: songCount,
-            thumbnailUrl: thumbnailUrl);
+    required super.browseId,
+    required super.title,
+    super.songCount,
+    required super.thumbnailUrl,
+  });
 
   factory PlaylistModel.fromPlaylist(Playlist playlist) {
     return PlaylistModel(
@@ -107,19 +95,13 @@ class PlaylistModel extends PlaylistEntity {
 
 class SongModel extends SongEntity {
   SongModel({
-    required String id,
-    required String title,
-    required String album,
-    required String artist,
-    required String thumbnailUrl,
-    Duration? duration,
-  }) : super(
-            id: id,
-            title: title,
-            album: album,
-            artist: artist,
-            thumbnailUrl: thumbnailUrl,
-            duration: duration);
+    required super.id,
+    required super.title,
+    required super.album,
+    required super.artist,
+    required super.thumbnailUrl,
+    super.duration,
+  });
 
   factory SongModel.fromMediaItem(MediaItem mediaItem) {
     return SongModel(
@@ -135,19 +117,13 @@ class SongModel extends SongEntity {
 
 class VideoModel extends VideoEntity {
   VideoModel({
-    required String id,
-    required String title,
-    required String author,
-    required String thumbnailUrl,
-    String? views,
-    String? length,
-  }) : super(
-            id: id,
-            title: title,
-            author: author,
-            thumbnailUrl: thumbnailUrl,
-            views: views,
-            length: length);
+    required super.id,
+    required super.title,
+    required super.author,
+    required super.thumbnailUrl,
+    super.views,
+    super.length,
+  });
 
   factory VideoModel.fromMediaItem(MediaItem mediaItem) {
     return VideoModel(
