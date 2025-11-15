@@ -4,6 +4,7 @@ class SearchResultEntity {
   final List<PlaylistSummaryEntity> playlists;
   final List<SongEntity> songs;
   final List<VideoEntity> videos;
+  final Map<String, dynamic>? continuationParams;
 
   SearchResultEntity({
     required this.albums,
@@ -11,6 +12,7 @@ class SearchResultEntity {
     required this.playlists,
     required this.songs,
     required this.videos,
+    this.continuationParams,
   });
 }
 

@@ -6,7 +6,7 @@ class SearchMusic {
 
   SearchMusic(this.repository);
 
-  Future<SearchResultEntity> call(String query, {String? filter}) {
-    return repository.search(query, filter: filter);
+  Future<SearchResultEntity> call(String query, {String? filter, String? scope, int limit = 20, bool ignoreSpelling = false}) {
+    return repository.search(query, filter: filter, scope: scope, limit: limit, ignoreSpelling: ignoreSpelling);
   }
 }

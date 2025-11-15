@@ -11,12 +11,14 @@ class SearchResultModel extends SearchResultEntity {
     required List<PlaylistSummaryModel> playlists,
     required List<SongModel> songs,
     required List<VideoModel> videos,
+    Map<String, dynamic>? continuationParams,
   }) : super(
             albums: albums,
             artists: artists,
             playlists: playlists,
             songs: songs,
-            videos: videos);
+            videos: videos,
+            continuationParams: continuationParams);
 
   factory SearchResultModel.fromJson(Map<String, dynamic> json) {
     return SearchResultModel(
@@ -35,6 +37,7 @@ class SearchResultModel extends SearchResultEntity {
       videos: (json['Videos'] as List? ?? [])
           .map((e) => VideoModel.fromMediaItem(e as MediaItem))
           .toList(),
+      continuationParams: json['params'],
     );
   }
 }

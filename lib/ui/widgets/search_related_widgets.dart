@@ -1,13 +1,9 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:harmonymusic/domain/entities/search_result_entity.dart';
-import 'package:harmonymusic/models/album.dart';
-import 'package:harmonymusic/models/artist.dart';
-import 'package:harmonymusic/models/playlist.dart';
-
-import '/ui/widgets/content_list_widget.dart';
-import 'separate_tab_item_widget.dart';
+import 'package:harmonymusic/ui/widgets/content_list_widget.dart';
+import 'package:harmonymusic/ui/widgets/separate_tab_item_widget.dart';
+import 'package:harmonymusic/ui/widgets/sort_widget.dart';
 
 class ResultWidget extends StatelessWidget {
   const ResultWidget({
@@ -15,11 +11,15 @@ class ResultWidget extends StatelessWidget {
     this.isv2Used = false,
     required this.searchResult,
     required this.queryString,
+    required this.onViewAllPressed,
+    required this.onSort,
   });
 
   final bool isv2Used;
   final SearchResultEntity searchResult;
   final String queryString;
+  final Function(String) onViewAllPressed;
+  final Function(SortType, bool, String) onSort;
 
   @override
   Widget build(BuildContext context) {
@@ -49,98 +49,59 @@ class ResultWidget extends StatelessWidget {
             const SizedBox(
               height: 10,
             ),
-            ...generateWidgetList(searchResult),
+            ..._generateWidgetList(),
           ]),
         ),
       ),
     );
   }
 
-  List<Widget> generateWidgetList(SearchResultEntity searchResult) {
+  List<Widget> _generateWidgetList() {
     List<Widget> list = [];
 
     if (searchResult.songs.isNotEmpty) {
       list.add(SeparateTabItemWidget(
-        items: searchResult.songs
-            .map((e) => MediaItem(
-                  id: e.id,
-                  title: e.title,
-                  album: e.album,
-                  artist: e.artist,
-                  artUri: Uri.parse(e.thumbnailUrl),
-                  duration: e.duration,
-                ))
-            .toList(),
+        items: searchResult.songs,
         title: "Songs",
         isCompleteList: false,
+        onSort: (sortType, isAscending) => onSort(sortType, isAscending, "Songs"),
       ));
     }
 
     if (searchResult.videos.isNotEmpty) {
       list.add(SeparateTabItemWidget(
-        items: searchResult.videos
-            .map((e) => MediaItem(
-                  id: e.id,
-                  title: e.title,
-                  artist: e.author,
-                  artUri: Uri.parse(e.thumbnailUrl),
-                  extras: {'views': e.views, 'length': e.length},
-                ))
-            .toList(),
+        items: searchResult.videos,
         title: "Videos",
         isCompleteList: false,
+        onSort: (sortType, isAscending) => onSort(sortType, isAscending, "Videos"),
       ));
     }
 
     if (searchResult.albums.isNotEmpty) {
       list.add(ContentListWidget(
-        content: AlbumContent(
-          title: "Albums",
-          albumList: searchResult.albums
-              .map((e) => Album(
-                    browseId: e.browseId,
-                    title: e.title,
-                    year: e.year,
-                    thumbnailUrl: e.thumbnailUrl,
-                    artists: e.artists
-                        ?.map((a) => {'name': a.name, 'id': a.browseId})
-                        .toList(),
-                  ))
-              .toList(),
-        ),
+        title: "Albums",
+        itemList: searchResult.albums,
         isHomeContent: false,
+        onViewAllPressed: () => onViewAllPressed("Albums"),
       ));
     }
 
     if (searchResult.artists.isNotEmpty) {
       list.add(SeparateTabItemWidget(
-        items: searchResult.artists
-            .map((e) => Artist(
-                  browseId: e.browseId,
-                  name: e.name,
-                  thumbnailUrl: e.thumbnailUrl,
-                  subscribers: e.subscribers,
-                ))
-            .toList(),
+        items: searchResult.artists,
         title: "Artists",
         isCompleteList: false,
+        onSort: (sortType, isAscending) => onSort(sortType, isAscending, "Artists"),
       ));
     }
 
     if (searchResult.playlists.isNotEmpty) {
       list.add(ContentListWidget(
-          content: PlaylistContent(
-            title: "Playlists",
-            playlistList: searchResult.playlists
-                .map((e) => Playlist(
-                      playlistId: e.browseId,
-                      title: e.title,
-                      thumbnailUrl: e.thumbnailUrl,
-                      songCount: e.songCount,
-                    ))
-                .toList(),
-          ),
-          isHomeContent: false));
+        title: "Playlists",
+        itemList: searchResult.playlists,
+        isHomeContent: false,
+        onViewAllPressed: () => onViewAllPressed("Playlists"),
+      ));
     }
 
     return list;

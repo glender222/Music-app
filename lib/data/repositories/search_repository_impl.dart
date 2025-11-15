@@ -8,12 +8,21 @@ class SearchRepositoryImpl implements SearchRepository {
   SearchRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<SearchResultEntity> search(String query, {String? filter}) async {
+  Future<SearchResultEntity> search(String query, {String? filter, String? scope, int limit = 20, bool ignoreSpelling = false}) async {
     try {
-      final searchResultModel = await remoteDataSource.search(query, filter: filter);
+      final searchResultModel = await remoteDataSource.search(query, filter: filter, scope: scope, limit: limit, ignoreSpelling: ignoreSpelling);
       return searchResultModel;
     } catch (e) {
-      // Here you can handle exceptions, e.g., by throwing a domain-specific exception
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SearchResultEntity> getSearchContinuation(Map additionalParamsNext, {int limit = 10}) async {
+    try {
+      final searchResultModel = await remoteDataSource.getSearchContinuation(additionalParamsNext, limit: limit);
+      return searchResultModel;
+    } catch (e) {
       rethrow;
     }
   }

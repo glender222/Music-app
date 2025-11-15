@@ -4,21 +4,17 @@ import 'package:get/get.dart';
 import 'package:harmonymusic/presentation/controllers/search_clean_controller.dart';
 import 'package:harmonymusic/ui/widgets/loader.dart';
 import 'package:harmonymusic/ui/widgets/search_related_widgets.dart';
+import 'package:harmonymusic/ui/widgets/sort_widget.dart';
 
 import '../../navigator.dart';
 import '../../widgets/separate_tab_item_widget.dart';
-import 'search_result_screen_controller.dart';
 
 class SearchResultScreenBN extends GetView<SearchCleanController> {
   const SearchResultScreenBN({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // We still need the old controller for tab management for now
-    final searchResScrController = Get.find<SearchResultScreenController>();
     final topPadding = context.isLandscape ? 50.0 : 80.0;
-
-    // The search is already triggered by SearchResultScreen, so we just observe the state
     return Scaffold(
       body: Padding(
           padding: EdgeInsets.only(
@@ -54,7 +50,7 @@ class SearchResultScreenBN extends GetView<SearchCleanController> {
                       alignment: Alignment.centerLeft,
                       child: Obx(
                         () => Text(
-                          "${"for1".tr} \"${searchResScrController.queryString.value}\"",
+                          "${"for1".tr} \"${controller.queryString.value}\"",
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -65,7 +61,7 @@ class SearchResultScreenBN extends GetView<SearchCleanController> {
               Expanded(
                 child: Obx(
                   () {
-                    if (controller.isLoading.value) {
+                    if (controller.isLoading.value && controller.searchResult.value == null) {
                       return const Center(child: LoadingIndicator());
                     }
 
@@ -73,8 +69,7 @@ class SearchResultScreenBN extends GetView<SearchCleanController> {
                       return Center(child: Text(controller.errorMessage.value));
                     }
 
-                    final searchResult = controller.searchResult.value;
-                    if (searchResult == null) {
+                    if (controller.searchResult.value == null || controller.railItems.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -84,22 +79,20 @@ class SearchResultScreenBN extends GetView<SearchCleanController> {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             Text(
-                                "'${searchResScrController.queryString.value}'"),
+                                "'${controller.queryString.value}'"),
                           ],
                         ),
                       );
                     }
 
-                    // We have results, build the tab bar UI
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Padding(
                           padding: const EdgeInsets.only(left: 15.0, top: 10),
                           child: ButtonsTabBar(
-                            onTap:
-                                searchResScrController.onDestinationSelected,
-                            controller: searchResScrController.tabController,
+                            onTap: controller.onDestinationSelected,
+                            controller: controller.tabController,
                             contentPadding:
                                 const EdgeInsets.only(left: 15, right: 15),
                             backgroundColor:
@@ -137,24 +130,35 @@ class SearchResultScreenBN extends GetView<SearchCleanController> {
                           child: Padding(
                             padding: const EdgeInsets.only(left: 15.0),
                             child: TabBarView(
-                              controller: searchResScrController.tabController,
+                              controller: controller.tabController,
                               children: [
                                 ResultWidget(
                                   isv2Used: true,
-                                  searchResult: searchResult,
-                                  queryString:
-                                      searchResScrController.queryString.value,
+                                  searchResult: controller.searchResult.value!,
+                                  queryString: controller.queryString.value,
+                                  onViewAllPressed: (String tabName) {
+                                      final index = controller.railItems.indexOf(tabName);
+                                      if (index != -1) {
+                                        controller.onDestinationSelected(index + 1);
+                                      }
+                                  },
+                                  onSort: (SortType sortType, bool isAscending, String title) {
+                                    controller.onSort(sortType, isAscending, title);
+                                  },
                                 ),
                                 ...controller.railItems
                                     .map((tabName) {
-                                  // This part still depends on the old controller for separated tabs.
-                                  // This will be refactored in a future step.
                                   return SeparateTabItemWidget(
-                                    title: tabName,
+                                    isResultWidget: true,
                                     hideTitle: true,
-                                    items: const [],
-                                    scrollController: searchResScrController
-                                        .scrollControllers[tabName],
+                                    items: controller.separatedResultContent[tabName] ?? [],
+                                    title: tabName,
+                                    isCompleteList: true,
+                                    scrollController:
+                                        controller.scrollControllers[tabName],
+                                    onSort: (sortType, isAscending) {
+                                      controller.onSort(sortType, isAscending, tabName);
+                                    },
                                   );
                                 }),
                               ],
