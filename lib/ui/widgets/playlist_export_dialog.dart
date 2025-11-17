@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:html/parser.dart' as html_parser;
 
 import '/ui/screens/Playlist/playlist_screen_controller.dart';
+import '../../domain/playlist/entities/export_type.dart';
 import 'common_dialog_widget.dart';
 import 'snackbar.dart';
 
@@ -44,7 +45,7 @@ class PlaylistExportDialog extends StatelessWidget {
               subtitle: "exportPlaylistJsonSubtitle".tr,
               onTap: () {
                 Navigator.of(context).pop();
-                controller.exportPlaylistToJson(parentContext);
+                controller.exportPlaylist(parentContext, ExportType.json);
               },
             ),
             const SizedBox(height: 12),
@@ -55,7 +56,7 @@ class PlaylistExportDialog extends StatelessWidget {
               subtitle: "exportPlaylistCsvSubtitle".tr,
               onTap: () {
                 Navigator.of(context).pop();
-                controller.exportPlaylistToCsv(parentContext);
+                controller.exportPlaylist(parentContext, ExportType.csv);
               },
             ),
             const SizedBox(height: 12),

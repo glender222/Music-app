@@ -5,6 +5,7 @@ import 'package:harmonymusic/data/playlist/models/track_model.dart';
 abstract class PlaylistLocalDataSource {
   Future<void> savePlaylist(PlaylistModel playlist);
   Future<void> removePlaylist(String playlistId);
+  Future<void> updatePlaylist(PlaylistModel playlist);
 }
 
 class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
@@ -37,6 +38,12 @@ class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
       final songsBox = await hive.openBox(playlistId);
       await songsBox.deleteFromDisk();
     }
+  }
+
+  @override
+  Future<void> updatePlaylist(PlaylistModel playlist) async {
+    // For now, updating is the same as saving. It overwrites the existing data.
+    return savePlaylist(playlist);
   }
 
   void _registerAdapters() {

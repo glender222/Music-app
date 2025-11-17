@@ -10,26 +10,23 @@ La modernización se está llevando a cabo de forma **incremental**, abordando u
 
 ## Progreso Actual
 
-### ✅ Funcionalidades Parcial o Totalmente Modernizadas
+### ✅ Funcionalidades Completamente Modernizadas
 
 1.  **Búsqueda:**
     *   **Estado:** ¡COMPLETADO!
     *   **Descripción:** Toda la funcionalidad relacionada con la búsqueda de música ha sido completamente reconstruida con la nueva Arquitectura Limpia.
 
 2.  **Gestión de Playlists:**
-    *   **Estado:** EN PROGRESO 🚧
-    *   **Descripción:** La lógica central de las playlists está siendo refactorizada.
-    *   **Avances Completados:**
-        *   ✅ Visualización del contenido de una playlist online.
-        *   ✅ Guardar una playlist en la biblioteca local (Hive).
-        *   ✅ Eliminar una playlist de la biblioteca local.
-    *   **Tareas Pendientes:**
-        *   📝 Refactorizar la lógica para **leer y editar** (reordenar, eliminar canciones) una playlist ya guardada.
-        *   📝 Refactorizar la funcionalidad de **exportar** una playlist a un archivo.
+    *   **Estado:** ¡COMPLETADO!
+    *   **Descripción:** Se ha refactorizado toda la lógica de las playlists, incluyendo:
+        *   Visualización del contenido de una playlist online.
+        *   Guardar y eliminar playlists de la biblioteca local.
+        *   Editar playlists locales (eliminar canciones).
+        *   Exportar playlists a archivos JSON y CSV.
 
 ---
 
-###  pendientes de Modernizar
+### 🚧 Funcionalidades Pendientes de Modernizar
 
 1.  **Pantalla de Inicio:**
     *   **Estado:** PENDIENTE.

@@ -2,6 +2,9 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:harmonymusic/data/playlist/datasources/playlist_local_data_source.dart';
 import 'package:harmonymusic/services/music_service.dart';
+import 'package:harmonymusic/data/playlist/datasources/playlist_export_data_source.dart';
+import 'package:harmonymusic/domain/playlist/usecases/update_local_playlist_usecase.dart';
+import 'package:harmonymusic/domain/playlist/usecases/export_playlist_usecase.dart';
 import 'package:harmonymusic/data/playlist/datasources/playlist_remote_data_source.dart';
 import 'package:harmonymusic/domain/playlist/usecases/get_online_playlist_details_usecase.dart';
 import 'package:harmonymusic/data/playlist/repositories/playlist_repository_impl.dart';
@@ -18,11 +21,15 @@ class PlaylistBinding extends Bindings {
     Get.lazyPut<PlaylistRemoteDataSource>(
       () => PlaylistRemoteDataSourceImpl(musicServices: Get.find<MusicServices>()),
     );
+    Get.lazyPut<PlaylistExportDataSource>(
+      () => PlaylistExportDataSourceImpl(hive: Get.find<HiveInterface>()),
+    );
 
     Get.lazyPut<PlaylistRepository>(
       () => PlaylistRepositoryImpl(
         localDataSource: Get.find<PlaylistLocalDataSource>(),
         remoteDataSource: Get.find<PlaylistRemoteDataSource>(),
+        exportDataSource: Get.find<PlaylistExportDataSource>(),
       ),
     );
 
@@ -36,6 +43,14 @@ class PlaylistBinding extends Bindings {
 
     Get.lazyPut<GetOnlinePlaylistDetailsUseCase>(
       () => GetOnlinePlaylistDetailsUseCase(Get.find<PlaylistRepository>()),
+    );
+
+    Get.lazyPut<UpdateLocalPlaylistUseCase>(
+      () => UpdateLocalPlaylistUseCase(Get.find<PlaylistRepository>()),
+    );
+
+    Get.lazyPut<ExportPlaylistUseCase>(
+      () => ExportPlaylistUseCase(Get.find<PlaylistRepository>()),
     );
   }
 }

@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:harmonymusic/utils/helper.dart';
 import 'package:harmonymusic/models/thumbnail.dart';
-import 'dart:convert';
 import 'dart:io';
 import 'package:harmonymusic/services/permission_service.dart';
-import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:harmonymusic/ui/widgets/snackbar.dart';
-import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:hive/hive.dart';
 
 import '../../../base_class/playlist_album_screen_con_base.dart';
@@ -25,6 +22,9 @@ import '../../../domain/playlist/entities/track_entity.dart';
 import '../../../domain/playlist/usecases/save_playlist_usecase.dart';
 import '../../../domain/playlist/usecases/remove_playlist_usecase.dart';
 import '../../../domain/playlist/usecases/get_online_playlist_details_usecase.dart';
+import '../../../domain/playlist/usecases/update_local_playlist_usecase.dart';
+import '../../../domain/playlist/usecases/export_playlist_usecase.dart';
+import '../../../domain/playlist/entities/export_type.dart';
 
 class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     with AdditionalOpeartionMixin, GetSingleTickerProviderStateMixin {
@@ -32,6 +32,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   final SavePlaylistUseCase _savePlaylistUseCase = Get.find<SavePlaylistUseCase>();
   final RemovePlaylistUseCase _removePlaylistUseCase = Get.find<RemovePlaylistUseCase>();
   final GetOnlinePlaylistDetailsUseCase _getOnlinePlaylistDetailsUseCase = Get.find<GetOnlinePlaylistDetailsUseCase>();
+  final UpdateLocalPlaylistUseCase _updateLocalPlaylistUseCase = Get.find<UpdateLocalPlaylistUseCase>();
+  final ExportPlaylistUseCase _exportPlaylistUseCase = Get.find<ExportPlaylistUseCase>();
 
   final playlist = Playlist(
     title: "",
@@ -225,19 +227,31 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
   @override
   Future<void> deleteMultipleSongs(List<MediaItem> songs) async {
-    final id = playlist.value.playlistId;
-    final isoffline = id == "SongsCache" || id == "SongDownloads";
-    final box_ = await Hive.openBox(id);
-    for (MediaItem element in songs) {
-      final index = box_.values.toList().indexWhere((ele) => ele['videoId'] == element.id);
-      await box_.deleteAt(index);
-      if (isoffline) {
-        await Get.find<LibrarySongsController>().removeSong(element, id == "SongDownloads");
-      }
-      songList.removeWhere((song) => song.id == element.id);
-    }
-    if (!isoffline) await box_.close();
+    final songIdsToRemove = songs.map((s) => s.id).toSet();
+    songList.removeWhere((song) => songIdsToRemove.contains(song.id));
+
+    final updatedTracks = songList.map((mediaItem) => TrackEntity(
+      id: mediaItem.id,
+      title: mediaItem.title,
+      artist: mediaItem.artist ?? 'Unknown Artist',
+      album: mediaItem.album,
+      thumbnailUrl: mediaItem.artUri?.toString(),
+      duration: mediaItem.duration,
+    )).toList();
+
+    final playlistEntity = PlaylistEntity(
+      id: playlist.value.playlistId,
+      title: playlist.value.title,
+      description: playlist.value.description,
+      thumbnailUrl: playlist.value.thumbnailUrl,
+      tracks: updatedTracks,
+    );
+
+    await _updateLocalPlaylistUseCase(playlistEntity);
     _updatePlaylistThumbSongBased();
+
+    // The activity service should probably be called from the use case,
+    // but for now we keep it here to minimize changes.
     if (isAddedToLibrary.value) {
       _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
@@ -279,12 +293,10 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     super.onClose();
   }
 
-  Future<void> exportPlaylistToJson(BuildContext context) async {
+  Future<void> exportPlaylist(BuildContext context, ExportType format) async {
     if (!await PermissionService.getExtStoragePermission()) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackbar(
-            context, "permissionDenied".tr,
-            size: SanckBarSize.MEDIUM));
+        ScaffoldMessenger.of(context).showSnackBar(snackbar(context, "permissionDenied".tr, size: SanckBarSize.MEDIUM));
       }
       return;
     }
@@ -292,254 +304,34 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     try {
       isExporting.value = true;
       exportProgress.value = 0.1;
-
       if (context.mounted) {
         _showProgressDialog(context, "exportingPlaylist".tr);
       }
 
-      final Directory exportDir = await _getExportDirectory();
-      exportProgress.value = 0.2;
-
-      final playlistData = {
-        "playlistInfo": playlist.value.toJson(),
-        "songs": songList.map((song) => MediaItemBuilder.toJson(song)).toList(),
-        "exportDate": DateTime.now().toIso8601String(),
-        "appVersion": Get.find<SettingsScreenController>().currentVersion,
-      };
-      exportProgress.value = 0.5;
-
-      final sanitizedName =
-          playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
-
-      String filename = "$sanitizedName.json";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.json";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
-
-      exportProgress.value = 0.7;
-
-      await file.writeAsString(jsonEncode(playlistData));
+      // Business logic is now in the use case
+      final filePath = await _exportPlaylistUseCase(playlistId: playlist.value.playlistId, format: format);
+      
       exportProgress.value = 1.0;
-
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
 
-      String locationMsg = _getLocationMessage(exportDir.path);
+      final dir = Directory(filePath).parent;
+      String locationMsg = _getLocationMessage(dir.path);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackbar(
-            context, "${"playlistExportedMsg".tr}: $locationMsg",
-            size: SanckBarSize.MEDIUM));
+        ScaffoldMessenger.of(context).showSnackBar(snackbar(context, "${"playlistExportedMsg".tr}: $locationMsg", size: SanckBarSize.MEDIUM));
       }
     } catch (e) {
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
-
       printERROR("Error exporting playlist: $e");
-      
-      String errorMsg = "exportError".tr;
-      if (e is FileSystemException) {
-        if (e.osError?.errorCode == 13) {
-          errorMsg = "exportErrorPermission".tr;
-        } else if (e.osError?.errorCode == 28) {
-          errorMsg = "exportErrorStorage".tr;
-        }
-      } else if (e is FormatException) {
-        errorMsg = "exportErrorFormat".tr;
-      }
-
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            snackbar(context, errorMsg, size: SanckBarSize.MEDIUM));
+        ScaffoldMessenger.of(context).showSnackBar(snackbar(context, "exportError".tr, size: SanckBarSize.MEDIUM));
       }
     } finally {
       isExporting.value = false;
       exportProgress.value = 0.0;
-    }
-  }
-
-  Future<void> exportPlaylistToCsv(BuildContext context) async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackbar(
-            context, "permissionDenied".tr,
-            size: SanckBarSize.MEDIUM));
-      }
-      return;
-    }
-
-    try {
-      isExporting.value = true;
-      exportProgress.value = 0.1;
-
-      if (context.mounted) {
-        _showProgressDialog(context, "exportingPlaylist".tr);
-      }
-
-      final Directory exportDir = await _getExportDirectory();
-      exportProgress.value = 0.2;
-
-      final csvContent = _generateCsvContent();
-      exportProgress.value = 0.5;
-
-      final sanitizedName =
-          playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
-
-      String filename = "$sanitizedName.csv";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.csv";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
-
-      exportProgress.value = 0.7;
-
-      await file.writeAsString(csvContent);
-      exportProgress.value = 1.0;
-
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-
-      String locationMsg = _getLocationMessage(exportDir.path);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(snackbar(
-            context, "${"playlistExportedMsg".tr}: $locationMsg",
-            size: SanckBarSize.MEDIUM));
-      }
-    } catch (e) {
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-
-      printERROR("Error exporting playlist to CSV: $e");
-      
-      String errorMsg = "exportError".tr;
-      if (e is FileSystemException) {
-        if (e.osError?.errorCode == 13) {
-          errorMsg = "exportErrorPermission".tr;
-        } else if (e.osError?.errorCode == 28) {
-          errorMsg = "exportErrorStorage".tr;
-        }
-      } else if (e is FormatException) {
-        errorMsg = "exportErrorFormat".tr;
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            snackbar(context, errorMsg, size: SanckBarSize.MEDIUM));
-      }
-    } finally {
-      isExporting.value = false;
-      exportProgress.value = 0.0;
-    }
-  }
-
-  String _generateCsvContent() {
-    final buffer = StringBuffer();
-    
-    buffer.writeln('PlaylistBrowseId,PlaylistName,MediaId,Title,Artists,Duration,ThumbnailUrl,AlbumId,AlbumTitle,ArtistIds');
-    
-    for (final song in songList) {
-      final playlistBrowseId = (!playlist.value.isCloudPlaylist || playlist.value.isPipedPlaylist)
-          ? ''
-          : _escapeCsvField(playlist.value.playlistId);
-      final playlistName = _escapeCsvField(playlist.value.title);
-      final mediaId = _escapeCsvField(song.id);
-      final title = _escapeCsvField(song.title);
-      
-      final artistsList = song.extras?['artists'] as List?;
-      final artists = artistsList != null
-          ? _escapeCsvField(artistsList.map((a) => a['name']).join(', '))
-          : '';
-      
-      final duration = song.duration != null
-          ? _formatDuration(song.duration!)
-          : '';
-      
-      final thumbnailUrl = _escapeCsvField(song.artUri.toString());
-      
-      final albumData = song.extras?['album'] as Map?;
-      final albumId = albumData != null ? _escapeCsvField(albumData['id'] ?? '') : '';
-      final albumTitle = albumData != null ? _escapeCsvField(albumData['name'] ?? '') : '';
-      
-      final artistIds = artistsList != null && artistsList.isNotEmpty
-          ? _escapeCsvField(artistsList.map((a) => a['id'] ?? '').join(','))
-          : '';
-      
-      buffer.writeln('$playlistBrowseId,$playlistName,$mediaId,$title,$artists,$duration,$thumbnailUrl,$albumId,$albumTitle,$artistIds');
-    }
-    
-    return buffer.toString();
-  }
-
-  String _escapeCsvField(String field) {
-    String escaped = field.replaceAll('"', '""');
-    
-    if (escaped.contains(',') || escaped.contains('\n') || escaped.contains('"')) {
-      escaped = '"$escaped"';
-    }
-    
-    return escaped;
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-    
-    if (hours > 0) {
-      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    } else {
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    }
-  }
-
-  Future<Directory> _getExportDirectory() async {
-    Directory directory;
-    const appFolderName = "HarmonyMusic";
-
-    try {
-      if (Platform.isAndroid) {
-        directory = Directory('/storage/emulated/0/Download/$appFolderName');
-      } else if (Platform.isIOS) {
-        final docDir = await path_provider.getApplicationDocumentsDirectory();
-        directory = Directory('${docDir.path}/$appFolderName');
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        final homeDir = Platform.environment['HOME'] ??
-            Platform.environment['USERPROFILE'] ??
-            '.';
-        directory = Directory('$homeDir/Downloads/$appFolderName');
-      } else {
-        final tempDir = await path_provider.getTemporaryDirectory();
-        directory = Directory('${tempDir.path}/$appFolderName');
-      }
-
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      return directory;
-    } catch (e) {
-      final appDocDir = await path_provider.getApplicationDocumentsDirectory();
-      directory = Directory('${appDocDir.path}/$appFolderName');
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-      return directory;
     }
   }
 
@@ -559,29 +351,18 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     Get.dialog(
       AlertDialog(
         backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text(title, style: Theme.of(context).textTheme.titleLarge),
         content: Obx(() => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 LinearProgressIndicator(
                   value: exportProgress.value,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.secondary,
-                  ),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.secondary),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  "${(exportProgress.value * 100).toInt()}%",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text("${(exportProgress.value * 100).toInt()}%", style: Theme.of(context).textTheme.bodyMedium),
               ],
             )),
       ),
