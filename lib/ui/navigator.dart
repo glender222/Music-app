@@ -10,7 +10,7 @@ import 'screens/Album/album_screen.dart';
 import 'screens/Playlist/playlist_screen.dart';
 import 'screens/Search/search_result_screen.dart';
 import 'screens/Search/search_screen.dart';
-import '../presentation/bindings/search_clean_binding.dart';
+import '../presentation/bindings/playlist_binding.dart';
 
 class ScreenNavigationSetup {
   ScreenNavigationSetup._();
@@ -54,6 +54,7 @@ class ScreenNavigation extends StatelessWidget {
                   page: () => PlaylistScreen(
                         key: Key(id),
                       ),
+                  binding: PlaylistBinding(),
                   settings: settings);
             
             case ScreenNavigationSetup.searchScreen:
@@ -62,9 +63,7 @@ class ScreenNavigation extends StatelessWidget {
             
             case ScreenNavigationSetup.searchResultScreen:
               return GetPageRoute(
-                  page: () => const SearchResultScreen(),
-                  binding: SearchCleanBinding(),
-                  settings: settings);
+                  page: () => const SearchResultScreen(), settings: settings);
             
             case ScreenNavigationSetup.artistScreen:
               final args = settings.arguments as List;

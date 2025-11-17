@@ -1,94 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/models/album.dart';
-import 'package:harmonymusic/models/playlist.dart';
-import 'package:harmonymusic/ui/widgets/album_song_tile_widget.dart';
-import 'package:harmonymusic/ui/widgets/playlist_tile_widget.dart';
-import 'package:harmonymusic/domain/entities/search_result_entity.dart';
+
+import '../screens/Search/search_result_screen_controller.dart';
+import '/ui/widgets/content_list_widget_item.dart';
 
 class ContentListWidget extends StatelessWidget {
-  const ContentListWidget({
-    super.key,
-    required this.title,
-    this.itemList,
-    this.isHomeContent = true,
-    this.onViewAllPressed,
-  });
+  ///ContentListWidget is used to render a section of Content like a list of Albums or Playlists in HomeScreen
+  const ContentListWidget(
+      {super.key,
+      this.content,
+      this.isHomeContent = true,
+      this.scrollController});
 
-  final String title;
-  final List<dynamic>? itemList;
+  ///content will be of class Type AlbumContent or PlaylistContent
+  final dynamic content;
   final bool isHomeContent;
-  final VoidCallback? onViewAllPressed;
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
-    if (itemList == null || itemList!.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final bool isAlbum = itemList!.first is AlbumSummaryEntity;
-    final bool isPlaylist = itemList!.first is PlaylistSummaryEntity;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 15.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              if (onViewAllPressed != null)
-                TextButton(
-                  onPressed: onViewAllPressed,
-                  child: Text(
-                    "viewAll".tr,
-                    style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                        color: Theme.of(context).colorScheme.secondary),
-                  ),
-                )
-            ],
-          ),
-        ),
-        SizedBox(
-          height: isAlbum ? 220 : 250,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (_, index) {
-              final item = itemList![index];
-              if (isAlbum) {
-                final albumEntity = item as AlbumSummaryEntity;
-                final album = Album(
-                  browseId: albumEntity.browseId,
-                  title: albumEntity.title,
-                  year: albumEntity.year,
-                  thumbnailUrl: albumEntity.thumbnailUrl,
-                  artists: albumEntity.artists?.map((a) => {'name': a.name, 'id': a.browseId}).toList(),
-                );
-                return AlbumTile(album: album);
-              } else if (isPlaylist) {
-                final playlistEntity = item as PlaylistSummaryEntity;
-                final playlist = Playlist(
-                  playlistId: playlistEntity.browseId,
-                  title: playlistEntity.title,
-                  thumbnailUrl: playlistEntity.thumbnailUrl,
-                  songCount: playlistEntity.songCount,
-                );
-                return PlaylistTile(playlist: playlist);
-              }
-              return null;
-            },
-            separatorBuilder: (_, __) => const SizedBox(
-              width: 15,
+    final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
+    // ignore: avoid_unnecessary_containers
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  !isHomeContent && content.title.length > 12
+                      ? "${content.title.substring(0, 12)}..."
+                      : content.title,
+                  //maxLines: 2,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                !isHomeContent
+                    ? TextButton(
+                        onPressed: () {
+                          final scrresController =
+                              Get.find<SearchResultScreenController>();
+                          scrresController.viewAllCallback(content.title);
+                        },
+                        child: Text("viewAll".tr,
+                            style: Theme.of(Get.context!).textTheme.titleSmall))
+                    : const SizedBox.shrink()
+              ],
             ),
-            itemCount: itemList!.length,
           ),
-        ),
-      ],
+          const SizedBox(height: 5),
+          SizedBox(
+            height: 200,
+            //color: Colors.blueAccent,
+            child: Scrollbar(
+              thickness: GetPlatform.isDesktop ? null : 0,
+              controller: scrollController,
+              child: ListView.separated(
+                  controller: scrollController,
+                  addAutomaticKeepAlives: false, //Testing going
+                  addRepaintBoundaries: false, //on this
+                  physics: const BouncingScrollPhysics(),
+                  separatorBuilder: (context, index) => const SizedBox(
+                        width: 15,
+                      ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: isAlbumContent
+                      ? content.albumList.length
+                      : content.playlistList.length,
+                  itemBuilder: (_, index) {
+                    if (isAlbumContent) {
+                      return ContentListItem(content: content.albumList[index]);
+                    }
+                    return ContentListItem(
+                        content: content.playlistList[index]);
+                  }),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -21,6 +21,10 @@ import '../../../services/piped_service.dart';
 import '../../../services/activity_service.dart';
 import '../Home/home_screen_controller.dart';
 import '../Library/library_controller.dart';
+import 'package:harmonymusic/domain/playlist/entities/playlist_entity.dart';
+import 'package:harmonymusic/domain/playlist/entities/track_entity.dart';
+import 'package:harmonymusic/domain/playlist/usecases/save_playlist_usecase.dart';
+import '../../../domain/playlist/usecases/remove_playlist_usecase.dart';
 
 ///PlaylistScreenController handles playlist screen
 ///
@@ -29,6 +33,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     with AdditionalOpeartionMixin, GetSingleTickerProviderStateMixin {
   final MusicServices _musicServices = Get.find<MusicServices>();
   final ActivityService _activityService = Get.find<ActivityService>();
+  final SavePlaylistUseCase _savePlaylistUseCase = Get.find<SavePlaylistUseCase>();
+  final RemovePlaylistUseCase _removePlaylistUseCase = Get.find<RemovePlaylistUseCase>();
+
   final playlist = Playlist(
     title: "",
     playlistId: "",
@@ -172,28 +179,48 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             await Get.find<PipedServices>().deletePlaylist(content.playlistId);
         Get.find<LibraryPlaylistsController>().syncPipedPlaylist();
         return (res.code == 1);
-      } else {
-        final box = await Hive.openBox("LibraryPlaylists");
-        final id = content.playlistId;
-        if (add) {
-          box.put(id, content.toJson());
-          _activityService.addPlaylist(content.title, songList.toList());
-          updateSongsIntoDb();
-        } else {
-          box.delete(id);
-          final songsBox = await Hive.openBox(id);
-          songsBox.deleteFromDisk();
-        }
-        isAddedToLibrary.value = add;
       }
-      //Update frontend
+
+      final id = content.playlistId;
+
+      if (add) {
+        // --- NEW CLEAN ARCHITECTURE LOGIC ---
+        final tracks = songList.map((mediaItem) => TrackEntity(
+          id: mediaItem.id,
+          title: mediaItem.title,
+          artist: mediaItem.artist ?? 'Unknown Artist',
+          album: mediaItem.album,
+          thumbnailUrl: mediaItem.artUri?.toString(),
+          duration: mediaItem.duration,
+        )).toList();
+
+        final playlistEntity = PlaylistEntity(
+          id: content.playlistId,
+          title: content.title,
+          description: content.description,
+          thumbnailUrl: content.thumbnailUrl,
+          tracks: tracks,
+        );
+
+        await _savePlaylistUseCase(playlistEntity);
+        _activityService.addPlaylist(content.title, songList.toList());
+        // --- END OF NEW LOGIC ---
+      } else {
+        // --- NEW CLEAN ARCHITECTURE LOGIC ---
+        await _removePlaylistUseCase(id);
+        // --- END OF NEW LOGIC ---
+      }
+
+      isAddedToLibrary.value = add;
       Get.find<LibraryPlaylistsController>().refreshLib();
+
       if (!content.isCloudPlaylist && !add) {
         final plstbox = await Hive.openBox(content.playlistId);
         plstbox.deleteFromDisk();
       }
       return true;
     } catch (e) {
+      // A proper implementation would show a snackbar or log this error.
       return false;
     }
   }

@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/presentation/controllers/search_clean_controller.dart';
-import 'package:harmonymusic/ui/screens/Search/search_result_screen_v2.dart';
-import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
-import 'package:harmonymusic/ui/widgets/animated_screen_transition.dart';
-import 'package:harmonymusic/ui/widgets/loader.dart';
-import 'package:harmonymusic/ui/widgets/search_related_widgets.dart';
-import 'package:harmonymusic/ui/widgets/separate_tab_item_widget.dart';
-import 'package:harmonymusic/ui/widgets/sort_widget.dart';
-import '../../navigator.dart';
 
-class SearchResultScreen extends GetView<SearchCleanController> {
+import '/ui/screens/Search/search_result_screen_v2.dart';
+import '/ui/screens/Settings/settings_screen_controller.dart';
+import '../../navigator.dart';
+import '../../widgets/animated_screen_transition.dart';
+import '../../widgets/loader.dart';
+import '../../widgets/search_related_widgets.dart';
+import '../../widgets/separate_tab_item_widget.dart';
+import 'search_result_screen_controller.dart';
+
+class SearchResultScreen extends StatelessWidget {
   const SearchResultScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final searchResScrController = Get.put(SearchResultScreenController());
     return GetPlatform.isDesktop ||
             Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
         ? const SearchResultScreenBN()
@@ -28,13 +29,15 @@ class SearchResultScreen extends GetView<SearchCleanController> {
                     child: IntrinsicHeight(
                       child: Obx(
                         () => NavigationRail(
-                          onDestinationSelected: controller.onDestinationSelected,
+                          onDestinationSelected:
+                              searchResScrController.onDestinationSelected,
                           minWidth: 60,
-                          destinations: (controller.searchResult.value != null &&
-                                  controller.railItems.isNotEmpty)
+                          destinations: (searchResScrController
+                                      .isResultContentFetced.value &&
+                                  searchResScrController.railItems.isNotEmpty)
                               ? [
                                   railDestination("results".tr),
-                                  ...(controller.railItems.map(
+                                  ...(searchResScrController.railItems.map(
                                       (element) => railDestination(element))),
                                 ]
                               : [
@@ -66,22 +69,26 @@ class SearchResultScreen extends GetView<SearchCleanController> {
                             ],
                           ),
                           labelType: NavigationRailLabelType.all,
-                          selectedIndex: controller.navigationRailCurrentIndex.value,
+                          selectedIndex: searchResScrController
+                              .navigationRailCurrentIndex.value,
                         ),
                       ),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: AnimatedScreenTransition(
-                    enabled: Get.find<SettingsScreenController>()
-                        .isTransitionAnimationDisabled
-                        .isFalse,
-                    resverse: controller.isTabTransitionReversed,
-                    child: Center(
-                      key: ValueKey<int>(
-                          controller.navigationRailCurrentIndex.toInt() * 8),
-                      child: Body(),
+                  child: GetX<SearchResultScreenController>(
+                    builder: (controller) => AnimatedScreenTransition(
+                      enabled: Get.find<SettingsScreenController>()
+                          .isTransitionAnimationDisabled
+                          .isFalse,
+                      resverse: controller.isTabTransitionReversed,
+                      child: Center(
+                        key: ValueKey<int>(
+                            controller.navigationRailCurrentIndex.toInt() * 8),
+                        child: Body(
+                            searchResScrController: searchResScrController),
+                      ),
                     ),
                   ),
                 )
@@ -100,23 +107,20 @@ class SearchResultScreen extends GetView<SearchCleanController> {
   }
 }
 
-class Body extends GetView<SearchCleanController> {
-  const Body({super.key});
+class Body extends StatelessWidget {
+  const Body({
+    super.key,
+    required this.searchResScrController,
+  });
+
+  final SearchResultScreenController searchResScrController;
 
   @override
   Widget build(BuildContext context) {
-    if (controller.navigationRailCurrentIndex.value == 0) {
+    if (searchResScrController.navigationRailCurrentIndex.value == 0) {
       return Obx(() {
-        if (controller.isLoading.value && controller.searchResult.value == null) {
-          return const Center(child: LoadingIndicator());
-        }
-
-        if (controller.errorMessage.value.isNotEmpty) {
-          return Center(child: Text(controller.errorMessage.value));
-        }
-
-        final searchResult = controller.searchResult.value;
-        if (searchResult == null) {
+        if (searchResScrController.isResultContentFetced.isTrue &&
+            searchResScrController.railItems.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -125,44 +129,31 @@ class Body extends GetView<SearchCleanController> {
                   "nomatch".tr,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                Text("'${controller.queryString.value}'"),
+                Text("'${searchResScrController.queryString.value}'"),
               ],
             ),
           );
-        }
-
-        return ResultWidget(
-          searchResult: searchResult,
-          queryString: controller.queryString.value,
-          onViewAllPressed: (String tabName) {
-            final index = controller.railItems.indexOf(tabName);
-            if (index != -1) {
-              controller.onDestinationSelected(index + 1);
-            }
-          },
-          onSort: (SortType sortType, bool isAscending, String title) {
-            controller.onSort(sortType, isAscending, title);
-          },
-        );
-      });
-    } else {
-      return Obx(() {
-        if (controller.searchResult.value != null) {
-          final topPadding = context.isLandscape ? 50.0 : 80.0;
-          final name = controller.railItems[
-              controller.navigationRailCurrentIndex.value - 1];
-          return SeparateTabItemWidget(
-            items: controller.separatedResultContent[name] ?? [],
-            title: name,
-            topPadding: topPadding,
-            scrollController: controller.scrollControllers[name],
-            onSort: (sortType, isAscending) {
-              controller.onSort(sortType, isAscending, name);
-            },
+        } else if (searchResScrController.isResultContentFetced.isTrue) {
+          return const ResultWidget();
+        } else {
+          return const Center(
+            child: LoadingIndicator(),
           );
         }
-        return const SizedBox.shrink();
       });
+    } else {
+      if (searchResScrController.isResultContentFetced.isTrue) {
+        final topPadding = context.isLandscape ? 50.0 : 80.0;
+        final name = searchResScrController.railItems[
+            searchResScrController.navigationRailCurrentIndex.value - 1];
+        return SeparateTabItemWidget(
+          items: const [],
+          title: name,
+          topPadding: topPadding,
+          scrollController: searchResScrController.scrollControllers[name],
+        );
+      }
     }
+    return const SizedBox.shrink();
   }
 }
