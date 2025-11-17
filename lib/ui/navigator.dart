@@ -11,6 +11,7 @@ import 'screens/Playlist/playlist_screen.dart';
 import 'screens/Search/search_result_screen.dart';
 import 'screens/Search/search_screen.dart';
 import '../presentation/bindings/playlist_binding.dart';
+import '../presentation/bindings/home_binding.dart';
 
 class ScreenNavigationSetup {
   ScreenNavigationSetup._();
@@ -38,7 +39,9 @@ class ScreenNavigation extends StatelessWidget {
 
             case ScreenNavigationSetup.homeScreen:
               return GetPageRoute(
-                  page: () => const HomeScreen(), settings: settings);
+                  page: () => const HomeScreen(),
+                  binding: HomeBinding(),
+                  settings: settings);
             
             case ScreenNavigationSetup.albumScreen:
               final id = (settings.arguments as (Album?, String)).$2;

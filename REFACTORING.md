@@ -14,32 +14,33 @@ La modernización se está llevando a cabo de forma **incremental**, abordando u
 
 1.  **Búsqueda:**
     *   **Estado:** ¡COMPLETADO!
-    *   **Descripción:** Toda la funcionalidad relacionada con la búsqueda de música ha sido completamente reconstruida con la nueva Arquitectura Limpia.
+    *   **Descripción:** Toda la funcionalidad relacionada con la búsqueda de música.
 
 2.  **Gestión de Playlists:**
     *   **Estado:** ¡COMPLETADO!
-    *   **Descripción:** Se ha refactorizado toda la lógica de las playlists, incluyendo:
-        *   Visualización del contenido de una playlist online.
-        *   Guardar y eliminar playlists de la biblioteca local.
-        *   Editar playlists locales (eliminar canciones).
-        *   Exportar playlists a archivos JSON y CSV.
+    *   **Descripción:** Toda la lógica de las playlists, incluyendo visualización, guardado, edición y exportación.
+
+### 🚧 Funcionalidades En Progreso
+
+1.  **Pantalla de Inicio:**
+    *   **Estado:** EN PROGRESO 🚧
+    *   **Descripción:** La pantalla principal de la aplicación.
+    *   **Avances Completados:**
+        *   ✅ Refactorizada la carga principal de contenido de la red (`getHome`).
+    *   **Tareas Pendientes:**
+        *   📝 Refactorizar la carga de contenido local (historial, recomendaciones).
+        *   📝 Refactorizar la lógica de "Quick Picks" y cambio de tipo de contenido.
+        *   📝 Refactorizar el sistema de caché en Hive.
 
 ---
 
-### 🚧 Funcionalidades Pendientes de Modernizar
+### 📝 Funcionalidades Pendientes de Modernizar
 
-1.  **Pantalla de Inicio:**
+1.  **Sistema de Recomendaciones:**
     *   **Estado:** PENDIENTE.
-    *   **Descripción:** La pantalla principal de la aplicación, que muestra contenido variado y sugerencias.
 
-2.  **Sistema de Recomendaciones:**
+2.  **Gestión de Descargas:**
     *   **Estado:** PENDIENTE.
-    *   **Descripción:** El sistema que genera y muestra recomendaciones personalizadas.
 
-3.  **Gestión de Descargas:**
+3.  **Configuraciones y Preferencias:**
     *   **Estado:** PENDIENTE.
-    *   **Descripción:** La lógica para descargar canciones, gestionarlas y reproducirlas sin conexión.
-
-4.  **Configuraciones y Preferencias:**
-    *   **Estado:** PENDIENTE.
-    *   **Descripción:** La pantalla de configuración y la gestión de las preferencias del usuario.
