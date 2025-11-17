@@ -1,40 +1,37 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:harmonymusic/utils/helper.dart';
 import 'package:harmonymusic/models/thumbnail.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:harmonymusic/services/permission_service.dart';
 import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:harmonymusic/ui/widgets/snackbar.dart';
-import 'package:harmonymusic/utils/helper.dart';
-import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
+import 'package:hive/hive.dart';
 
 import '../../../base_class/playlist_album_screen_con_base.dart';
 import '../../../mixins/additional_opeartion_mixin.dart';
 import '../../../models/album.dart' show Album;
 import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
-import '../../../services/music_service.dart';
 import '../../../services/piped_service.dart';
 import '../../../services/activity_service.dart';
 import '../Home/home_screen_controller.dart';
 import '../Library/library_controller.dart';
-import 'package:harmonymusic/domain/playlist/entities/playlist_entity.dart';
-import 'package:harmonymusic/domain/playlist/entities/track_entity.dart';
-import 'package:harmonymusic/domain/playlist/usecases/save_playlist_usecase.dart';
+import '../../../domain/playlist/entities/playlist_entity.dart';
+import '../../../domain/playlist/entities/track_entity.dart';
+import '../../../domain/playlist/usecases/save_playlist_usecase.dart';
 import '../../../domain/playlist/usecases/remove_playlist_usecase.dart';
+import '../../../domain/playlist/usecases/get_online_playlist_details_usecase.dart';
 
-///PlaylistScreenController handles playlist screen
-///
-///Playlist title,image,songs
 class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     with AdditionalOpeartionMixin, GetSingleTickerProviderStateMixin {
-  final MusicServices _musicServices = Get.find<MusicServices>();
   final ActivityService _activityService = Get.find<ActivityService>();
   final SavePlaylistUseCase _savePlaylistUseCase = Get.find<SavePlaylistUseCase>();
   final RemovePlaylistUseCase _removePlaylistUseCase = Get.find<RemovePlaylistUseCase>();
+  final GetOnlinePlaylistDetailsUseCase _getOnlinePlaylistDetailsUseCase = Get.find<GetOnlinePlaylistDetailsUseCase>();
 
   final playlist = Playlist(
     title: "",
@@ -42,14 +39,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     thumbnailUrl: Playlist.thumbPlaceholderUrl,
   ).obs;
   final isDefaultPlaylist = false.obs;
-
-  // Add this RxBool to track export progress
   final isExporting = false.obs;
   final exportProgress = 0.0.obs;
-
   String generatedYtmPlaylistUrl = '';
-
-  // Title animation
 
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -58,6 +50,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   AnimationController get animationController => _animationController;
   Animation<double> get scaleAnimation => _scaleAnimation;
   Animation<double> get heightAnimation => _heightAnimation;
+
   @override
   void onInit() {
     super.onInit();
@@ -65,40 +58,28 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
-    _scaleAnimation =
-        Tween<double>(begin: 0, end: 1.0).animate(animationController);
-
-    _heightAnimation =
-        Tween<double>(begin: 10.0, end: 75.0).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutBack));
+    _scaleAnimation = Tween<double>(begin: 0, end: 1.0).animate(animationController);
+    _heightAnimation = Tween<double>(begin: 10.0, end: 75.0).animate(CurvedAnimation(parent: animationController, curve: Curves.easeOutBack));
 
     final args = Get.arguments as List;
     final Playlist? playlist = args[0];
     final playlistId = args[1];
     fetchPlaylistDetails(playlist, playlistId);
-    Future.delayed(const Duration(milliseconds: 200),
-        () => Get.find<HomeScreenController>().whenHomeScreenOnTop());
+    Future.delayed(const Duration(milliseconds: 200), () => Get.find<HomeScreenController>().whenHomeScreenOnTop());
   }
 
-  ///Fetches playlist details from the service
   @override
   void fetchPlaylistDetails(Playlist? playlist_, String playlistId) async {
     final isIdOnly = playlist_ == null;
     final isPipedPlaylist = playlist_?.isPipedPlaylist ?? false;
-    isDefaultPlaylist.value = (playlistId == "SongDownloads" ||
-        playlistId == "SongsCache" ||
-        playlistId == "LIBRP" ||
-        playlistId == "LIBFAV");
+    isDefaultPlaylist.value = (playlistId == "SongDownloads" || playlistId == "SongsCache" || playlistId == "LIBRP" || playlistId == "LIBFAV");
 
     if (!isIdOnly && !playlist_.isCloudPlaylist) {
       playlist.value = playlist_;
       _animationController.forward();
       fetchSongsfromDatabase(playlistId);
       isContentFetched.value = true;
-
-      Future.delayed(
-          const Duration(seconds: 1), () => _updatePlaylistThumbSongBased());
-
+      Future.delayed(const Duration(seconds: 1), () => _updatePlaylistThumbSongBased());
       return;
     }
 
@@ -108,7 +89,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
 
     try {
-      // Check if the playlist is offline
       if (await checkIfAddedToLibrary(playlistId)) {
         final songsBox = await Hive.openBox(playlistId);
         if (songsBox.values.isEmpty) {
@@ -116,8 +96,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             updateSongsIntoDb();
           });
         } else {
-          // If the playlist is offline, fetch the songs from the local database
-          // Playlist details are already fetched in _checkIfAddedToLibrary method
           fetchSongsfromDatabase(playlistId);
         }
       } else {
@@ -125,13 +103,11 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       }
       isContentFetched.value = true;
     } catch (e) {
-      // Handle any errors that occur during the fetch
       printERROR("Error fetching playlist details: $e");
     }
   }
 
-  Future<void> _fetchSongOnline(
-      String id, bool isIdOnly, bool isPipedPlaylist) async {
+  Future<void> _fetchSongOnline(String id, bool isIdOnly, bool isPipedPlaylist) async {
     isContentFetched.value = false;
 
     if (isPipedPlaylist) {
@@ -141,15 +117,29 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       return;
     }
 
-    final content =
-        await _musicServices.getPlaylistOrAlbumSongs(playlistId: id);
+    final playlistEntity = await _getOnlinePlaylistDetailsUseCase(id);
+
+    final legacyPlaylist = Playlist(
+      playlistId: playlistEntity.id,
+      title: playlistEntity.title,
+      description: playlistEntity.description,
+      thumbnailUrl: playlistEntity.thumbnailUrl,
+    );
+
+    final mediaItems = playlistEntity.tracks.map((track) => MediaItem(
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      album: track.album,
+      artUri: track.thumbnailUrl != null ? Uri.parse(track.thumbnailUrl!) : null,
+      duration: track.duration,
+    )).toList();
 
     if (isIdOnly) {
-      content['playlistId'] = id;
-      playlist.value = Playlist.fromJson(content);
+      playlist.value = legacyPlaylist;
       _animationController.forward();
     }
-    songList.value = List<MediaItem>.from(content['tracks']);
+    songList.value = mediaItems;
     checkDownloadStatus();
   }
 
@@ -174,9 +164,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   Future<bool> addNremoveFromLibrary(dynamic content, {bool add = true}) async {
     try {
       if (content.isPipedPlaylist && !add) {
-        //remove piped playlist from lib
-        final res =
-            await Get.find<PipedServices>().deletePlaylist(content.playlistId);
+        final res = await Get.find<PipedServices>().deletePlaylist(content.playlistId);
         Get.find<LibraryPlaylistsController>().syncPipedPlaylist();
         return (res.code == 1);
       }
@@ -184,7 +172,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final id = content.playlistId;
 
       if (add) {
-        // --- NEW CLEAN ARCHITECTURE LOGIC ---
         final tracks = songList.map((mediaItem) => TrackEntity(
           id: mediaItem.id,
           title: mediaItem.title,
@@ -204,11 +191,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
         await _savePlaylistUseCase(playlistEntity);
         _activityService.addPlaylist(content.title, songList.toList());
-        // --- END OF NEW LOGIC ---
       } else {
-        // --- NEW CLEAN ARCHITECTURE LOGIC ---
         await _removePlaylistUseCase(id);
-        // --- END OF NEW LOGIC ---
       }
 
       isAddedToLibrary.value = add;
@@ -220,7 +204,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       }
       return true;
     } catch (e) {
-      // A proper implementation would show a snackbar or log this error.
       return false;
     }
   }
@@ -234,10 +217,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       await songsBox.put(i, MediaItemBuilder.toJson(songListCopy[i]));
     }
     if (playlist.value.playlistId != "SongDownloads") await songsBox.close();
-
-    // Update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
-
     if (isAddedToLibrary.value) {
       _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
@@ -247,94 +227,53 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   Future<void> deleteMultipleSongs(List<MediaItem> songs) async {
     final id = playlist.value.playlistId;
     final isoffline = id == "SongsCache" || id == "SongDownloads";
-
     final box_ = await Hive.openBox(id);
     for (MediaItem element in songs) {
-      final index = box_.values
-          .toList()
-          .indexWhere((ele) => ele['videoId'] == element.id);
+      final index = box_.values.toList().indexWhere((ele) => ele['videoId'] == element.id);
       await box_.deleteAt(index);
-
       if (isoffline) {
-        await Get.find<LibrarySongsController>()
-            .removeSong(element, id == "SongDownloads");
+        await Get.find<LibrarySongsController>().removeSong(element, id == "SongDownloads");
       }
-
       songList.removeWhere((song) => song.id == element.id);
     }
     if (!isoffline) await box_.close();
-
-    // Update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
-
     if (isAddedToLibrary.value) {
       _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
   }
 
-  void addNRemoveItemsinList(MediaItem? item,
-      {required String action, int? index}) {
+  void addNRemoveItemsinList(MediaItem? item, {required String action, int? index}) {
     if (action == 'add') {
-      if (tempListContainer.isNotEmpty) {
-        index != null
-            ? tempListContainer.insert(index, item!)
-            : tempListContainer.add(item!);
-        return;
-      }
       index != null ? songList.insert(index, item!) : songList.add(item!);
     } else {
-      if (tempListContainer.isNotEmpty) {
-        index != null
-            ? tempListContainer.removeAt(index)
-            : tempListContainer.remove(item);
-      }
       index != null ? songList.removeAt(index) : songList.remove(item);
     }
-
-    // update the playlist thumbnail based on the first song's thumbnail
     _updatePlaylistThumbSongBased();
-
     if (isAddedToLibrary.value) {
       _activityService.addPlaylist(playlist.value.title, songList.toList());
     }
   }
 
   @override
-  void fetchAlbumDetails(Album? album_,String albumId) {} // Not used in this class
+  void fetchAlbumDetails(Album? album_,String albumId) {}
 
-  /// This function updates the local playlist thumbnail based on the first song's thumbnail
   void _updatePlaylistThumbSongBased() {
     final currentPlaylist = playlist.value;
-
-    if (isDefaultPlaylist.isTrue || currentPlaylist.isCloudPlaylist) {
-      return;
-    }
-
+    if (isDefaultPlaylist.isTrue || currentPlaylist.isCloudPlaylist) return;
     Playlist updatedplaylist;
     if (songList.isNotEmpty) {
-      updatedplaylist =
-          currentPlaylist.copyWith(thumbnailUrl: songList[0].artUri.toString());
+      updatedplaylist = currentPlaylist.copyWith(thumbnailUrl: songList[0].artUri.toString());
     } else {
-      updatedplaylist =
-          currentPlaylist.copyWith(thumbnailUrl: Playlist.thumbPlaceholderUrl);
+      updatedplaylist = currentPlaylist.copyWith(thumbnailUrl: Playlist.thumbPlaceholderUrl);
     }
-
-    // Check if the thumbnail URL is the same as the current one
-    // If it is, no need to update the playlist
-    if (Thumbnail(currentPlaylist.thumbnailUrl).extraHigh ==
-        Thumbnail(updatedplaylist.thumbnailUrl).extraHigh) {
-      return;
-    }
-
-    // Update the playlist thumbnail URL
+    if (Thumbnail(currentPlaylist.thumbnailUrl).extraHigh == Thumbnail(updatedplaylist.thumbnailUrl).extraHigh) return;
     playlist.value = updatedplaylist;
-    Get.find<LibraryPlaylistsController>()
-        .updatePlaylistIntoDb(updatedplaylist);
+    Get.find<LibraryPlaylistsController>().updatePlaylistIntoDb(updatedplaylist);
   }
 
   @override
   void onClose() {
-    tempListContainer.clear();
     _animationController.dispose();
     Get.find<HomeScreenController>().whenHomeScreenOnTop();
     super.onClose();
@@ -354,16 +293,13 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       isExporting.value = true;
       exportProgress.value = 0.1;
 
-      // Show progress dialog
       if (context.mounted) {
         _showProgressDialog(context, "exportingPlaylist".tr);
       }
 
-      // Get appropriate directory based on platform
       final Directory exportDir = await _getExportDirectory();
       exportProgress.value = 0.2;
 
-      // Create playlist data map
       final playlistData = {
         "playlistInfo": playlist.value.toJson(),
         "songs": songList.map((song) => MediaItemBuilder.toJson(song)).toList(),
@@ -372,11 +308,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       };
       exportProgress.value = 0.5;
 
-      // Generate filename with playlist name
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
       String filename = "$sanitizedName.json";
       String filePath = "${exportDir.path}/$filename";
       File file = File(filePath);
@@ -391,16 +325,13 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
       exportProgress.value = 0.7;
 
-      // Write JSON to file
       await file.writeAsString(jsonEncode(playlistData));
       exportProgress.value = 1.0;
 
-      // Close progress dialog if it's still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
 
-      // Show success message with platform-specific path info
       String locationMsg = _getLocationMessage(exportDir.path);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(snackbar(
@@ -408,7 +339,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             size: SanckBarSize.MEDIUM));
       }
     } catch (e) {
-      // Close progress dialog if it's still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
@@ -450,24 +380,19 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       isExporting.value = true;
       exportProgress.value = 0.1;
 
-      // Show progress dialog
       if (context.mounted) {
         _showProgressDialog(context, "exportingPlaylist".tr);
       }
 
-      // Get appropriate directory based on platform
       final Directory exportDir = await _getExportDirectory();
       exportProgress.value = 0.2;
 
-      // Build CSV content
       final csvContent = _generateCsvContent();
       exportProgress.value = 0.5;
 
-      // Generate filename with playlist name
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
       String filename = "$sanitizedName.csv";
       String filePath = "${exportDir.path}/$filename";
       File file = File(filePath);
@@ -482,16 +407,13 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
       exportProgress.value = 0.7;
 
-      // Write CSV to file
       await file.writeAsString(csvContent);
       exportProgress.value = 1.0;
 
-      // Close progress dialog if it's still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
 
-      // Show success message with platform-specific path info
       String locationMsg = _getLocationMessage(exportDir.path);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(snackbar(
@@ -499,7 +421,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             size: SanckBarSize.MEDIUM));
       }
     } catch (e) {
-      // Close progress dialog if it's still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
@@ -530,12 +451,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   String _generateCsvContent() {
     final buffer = StringBuffer();
     
-    // CSV Header
     buffer.writeln('PlaylistBrowseId,PlaylistName,MediaId,Title,Artists,Duration,ThumbnailUrl,AlbumId,AlbumTitle,ArtistIds');
     
-    // CSV Rows - one for each song
     for (final song in songList) {
-      // Keep playlistBrowseId blank for offline/piped playlists
       final playlistBrowseId = (!playlist.value.isCloudPlaylist || playlist.value.isPipedPlaylist)
           ? ''
           : _escapeCsvField(playlist.value.playlistId);
@@ -543,25 +461,21 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final mediaId = _escapeCsvField(song.id);
       final title = _escapeCsvField(song.title);
       
-      // Extract artists as comma-separated string
       final artistsList = song.extras?['artists'] as List?;
       final artists = artistsList != null
           ? _escapeCsvField(artistsList.map((a) => a['name']).join(', '))
           : '';
       
-      // Format duration as HH:MM:SS or MM:SS
       final duration = song.duration != null
           ? _formatDuration(song.duration!)
           : '';
       
       final thumbnailUrl = _escapeCsvField(song.artUri.toString());
       
-      // Extract album information
       final albumData = song.extras?['album'] as Map?;
       final albumId = albumData != null ? _escapeCsvField(albumData['id'] ?? '') : '';
       final albumTitle = albumData != null ? _escapeCsvField(albumData['name'] ?? '') : '';
       
-      // Extract all artist IDs (comma-separated)
       final artistIds = artistsList != null && artistsList.isNotEmpty
           ? _escapeCsvField(artistsList.map((a) => a['id'] ?? '').join(','))
           : '';
@@ -573,10 +487,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   }
 
   String _escapeCsvField(String field) {
-    // Escape double quotes by doubling them
     String escaped = field.replaceAll('"', '""');
     
-    // If field contains comma, newline, or double quote, wrap in quotes
     if (escaped.contains(',') || escaped.contains('\n') || escaped.contains('"')) {
       escaped = '"$escaped"';
     }
@@ -596,39 +508,32 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get the appropriate export directory for each platform
   Future<Directory> _getExportDirectory() async {
     Directory directory;
     const appFolderName = "HarmonyMusic";
 
     try {
       if (Platform.isAndroid) {
-        // Android: use Downloads folder
         directory = Directory('/storage/emulated/0/Download/$appFolderName');
       } else if (Platform.isIOS) {
-        // iOS: use Documents directory
         final docDir = await path_provider.getApplicationDocumentsDirectory();
         directory = Directory('${docDir.path}/$appFolderName');
       } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        // Desktop platforms: use Downloads folder in user's home directory
         final homeDir = Platform.environment['HOME'] ??
             Platform.environment['USERPROFILE'] ??
             '.';
         directory = Directory('$homeDir/Downloads/$appFolderName');
       } else {
-        // Fallback: use temporary directory
         final tempDir = await path_provider.getTemporaryDirectory();
         directory = Directory('${tempDir.path}/$appFolderName');
       }
 
-      // Create directory if it doesn't exist
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
 
       return directory;
     } catch (e) {
-      // Fallback to app's documents directory if any error occurs
       final appDocDir = await path_provider.getApplicationDocumentsDirectory();
       directory = Directory('${appDocDir.path}/$appFolderName');
       if (!await directory.exists()) {
@@ -638,7 +543,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get a user-friendly location message
   String _getLocationMessage(String path) {
     if (Platform.isAndroid) {
       return "Downloads/HarmonyMusic";
@@ -651,7 +555,6 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to show progress dialog
   void _showProgressDialog(BuildContext context, String title) {
     Get.dialog(
       AlertDialog(

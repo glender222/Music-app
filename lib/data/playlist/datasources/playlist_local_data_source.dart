@@ -30,12 +30,9 @@ class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
 
   @override
   Future<void> removePlaylist(String playlistId) async {
-    // 1. Delete the main playlist metadata
     final libraryBox = await hive.openBox(libraryPlaylistsBoxName);
     await libraryBox.delete(playlistId);
 
-    // 2. Delete the dedicated box with all the songs
-    // Check if the box exists before trying to delete it from disk
     if (await hive.boxExists(playlistId)) {
       final songsBox = await hive.openBox(playlistId);
       await songsBox.deleteFromDisk();

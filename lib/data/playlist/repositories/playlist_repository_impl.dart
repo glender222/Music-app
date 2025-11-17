@@ -1,12 +1,17 @@
 import 'package:harmonymusic/data/playlist/datasources/playlist_local_data_source.dart';
+import 'package:harmonymusic/data/playlist/datasources/playlist_remote_data_source.dart';
 import 'package:harmonymusic/data/playlist/models/playlist_model.dart';
 import 'package:harmonymusic/domain/playlist/entities/playlist_entity.dart';
 import 'package:harmonymusic/domain/playlist/repositories/playlist_repository.dart';
 
 class PlaylistRepositoryImpl implements PlaylistRepository {
   final PlaylistLocalDataSource localDataSource;
+  final PlaylistRemoteDataSource remoteDataSource;
 
-  PlaylistRepositoryImpl({required this.localDataSource});
+  PlaylistRepositoryImpl({
+    required this.localDataSource,
+    required this.remoteDataSource,
+  });
 
   @override
   Future<void> savePlaylist(PlaylistEntity playlist) async {
@@ -24,6 +29,16 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       await localDataSource.removePlaylist(playlistId);
     } catch (e) {
       throw Exception('Failed to remove playlist.');
+    }
+  }
+
+  @override
+  Future<PlaylistEntity> getOnlinePlaylistDetails(String playlistId) async {
+    try {
+      final playlistModel = await remoteDataSource.getOnlinePlaylistDetails(playlistId);
+      return playlistModel;
+    } catch (e) {
+      throw Exception('Failed to get online playlist details.');
     }
   }
 }
