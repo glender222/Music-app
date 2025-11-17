@@ -4,6 +4,16 @@ import 'package:harmonymusic/data/home/repositories/home_repository_impl.dart';
 import 'package:harmonymusic/domain/home/repositories/home_repository.dart';
 import 'package:harmonymusic/domain/home/usecases/get_home_page_content_usecase.dart';
 import 'package:harmonymusic/services/music_service.dart';
+import 'package:harmonymusic/services/activity_service.dart';
+import 'package:harmonymusic/services/recommendation_service.dart';
+import 'package:harmonymusic/data/home/datasources/home_local_data_source.dart';
+import 'package:harmonymusic/data/home/datasources/recommendation_data_source.dart';
+import 'package:harmonymusic/domain/home/usecases/get_recently_played_usecase.dart';
+import 'package:harmonymusic/domain/home/usecases/get_recommendations_usecase.dart';
+import 'package:harmonymusic/domain/home/usecases/get_cached_home_content_usecase.dart';
+import 'package:harmonymusic/domain/home/usecases/cache_home_content_usecase.dart';
+import 'package:harmonymusic/domain/home/usecases/get_quick_picks_usecase.dart';
+import 'package:hive/hive.dart';
 
 class HomeBinding extends Bindings {
   @override
@@ -11,13 +21,26 @@ class HomeBinding extends Bindings {
     Get.lazyPut<HomeRemoteDataSource>(
       () => HomeRemoteDataSourceImpl(musicServices: Get.find<MusicServices>()),
     );
+    Get.lazyPut<HomeLocalDataSource>(
+      () => HomeLocalDataSourceImpl(activityService: Get.find<ActivityService>(), hive: Get.find<HiveInterface>()),
+    );
+    Get.lazyPut<RecommendationDataSource>(
+      () => RecommendationDataSourceImpl(recommendationService: Get.find<RecommendationService>()),
+    );
 
     Get.lazyPut<HomeRepository>(
-      () => HomeRepositoryImpl(remoteDataSource: Get.find<HomeRemoteDataSource>()),
+      () => HomeRepositoryImpl(
+        remoteDataSource: Get.find<HomeRemoteDataSource>(),
+        localDataSource: Get.find<HomeLocalDataSource>(),
+        recommendationDataSource: Get.find<RecommendationDataSource>(),
+      ),
     );
 
-    Get.lazyPut<GetHomePageContentUseCase>(
-      () => GetHomePageContentUseCase(Get.find<HomeRepository>()),
-    );
+    Get.lazyPut<GetHomePageContentUseCase>(() => GetHomePageContentUseCase(Get.find<HomeRepository>()));
+    Get.lazyPut<GetRecentlyPlayedUseCase>(() => GetRecentlyPlayedUseCase(Get.find<HomeRepository>()));
+    Get.lazyPut<GetRecommendationsUseCase>(() => GetRecommendationsUseCase(Get.find<HomeRepository>()));
+    Get.lazyPut<GetCachedHomeContentUseCase>(() => GetCachedHomeContentUseCase(Get.find<HomeRepository>()));
+    Get.lazyPut<CacheHomeContentUseCase>(() => CacheHomeContentUseCase(Get.find<HomeRepository>()));
+    Get.lazyPut<GetQuickPicksUseCase>(() => GetQuickPicksUseCase(Get.find<HomeRepository>()));
   }
 }

@@ -17,4 +17,23 @@ class AlbumModel extends AlbumEntity {
       thumbnailUrl: legacyAlbum.thumbnailUrl,
     );
   }
+
+  factory AlbumModel.fromJson(Map<String, dynamic> json) {
+    return AlbumModel(
+      id: json['id'],
+      title: json['title'],
+      artist: json['artist'],
+      thumbnailUrl: json['thumbnailUrl'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'artist': artist,
+      'thumbnailUrl': thumbnailUrl,
+      'modelType': 'AlbumModel', // To help with deserialization
+    };
+  }
 }

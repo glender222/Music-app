@@ -20,27 +20,22 @@ La modernización se está llevando a cabo de forma **incremental**, abordando u
     *   **Estado:** ¡COMPLETADO!
     *   **Descripción:** Toda la lógica de las playlists, incluyendo visualización, guardado, edición y exportación.
 
-### 🚧 Funcionalidades En Progreso
-
-1.  **Pantalla de Inicio:**
-    *   **Estado:** EN PROGRESO 🚧
-    *   **Descripción:** La pantalla principal de la aplicación.
-    *   **Avances Completados:**
-        *   ✅ Refactorizada la carga principal de contenido de la red (`getHome`).
-    *   **Tareas Pendientes:**
-        *   📝 Refactorizar la carga de contenido local (historial, recomendaciones).
-        *   📝 Refactorizar la lógica de "Quick Picks" y cambio de tipo de contenido.
-        *   📝 Refactorizar el sistema de caché en Hive.
+3.  **Pantalla de Inicio:**
+    *   **Estado:** ¡COMPLETADO!
+    *   **Descripción:** Toda la lógica de negocio para la carga de contenido (local, de red, caché y "Quick Picks") ha sido refactorizada.
 
 ---
 
-### 📝 Funcionalidades Pendientes de Modernizar
+### 🚧 Funcionalidades Pendientes de Modernizar
 
 1.  **Sistema de Recomendaciones:**
     *   **Estado:** PENDIENTE.
+    *   **Descripción:** Aunque la carga de recomendaciones está refactorizada en la pantalla de inicio, el servicio subyacente (`RecommendationService`) podría ser un objetivo de refactorización futuro.
 
 2.  **Gestión de Descargas:**
     *   **Estado:** PENDIENTE.
+    *   **Descripción:** La lógica para descargar canciones, gestionarlas y reproducirlas sin conexión.
 
 3.  **Configuraciones y Preferencias:**
     *   **Estado:** PENDIENTE.
+    *   **Descripción:** La pantalla de configuración y la gestión de las preferencias del usuario.

@@ -80,6 +80,7 @@ class PlaylistModel extends PlaylistEntity {
       'description': description,
       'thumbnailUrl': thumbnailUrl,
       'tracks': tracks.map((track) => track.toJson()).toList(),
+      'modelType': 'PlaylistModel', // To help with deserialization
     };
   }
 }

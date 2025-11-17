@@ -22,4 +22,36 @@ class HomeSectionModel extends HomeSectionEntity {
 
     return HomeSectionModel(title: title, items: items);
   }
+
+  factory HomeSectionModel.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> items = (json['items'] as List).map((itemJson) {
+      if (itemJson['modelType'] == 'AlbumModel') {
+        return AlbumModel.fromJson(itemJson);
+      } else if (itemJson['modelType'] == 'PlaylistModel') {
+        return PlaylistModel.fromJson(itemJson);
+      }
+      return null;
+    }).where((item) => item != null).toList();
+
+    return HomeSectionModel(
+      title: json['title'],
+      items: items,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final List<Map<String, dynamic>> itemsJson = items.map<Map<String, dynamic>>((item) {
+      if (item is AlbumModel) {
+        return item.toJson();
+      } else if (item is PlaylistModel) {
+        return item.toJson();
+      }
+      return {}; // Should not happen
+    }).toList();
+
+    return {
+      'title': title,
+      'items': itemsJson,
+    };
+  }
 }
