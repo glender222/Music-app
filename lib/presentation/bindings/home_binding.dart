@@ -39,7 +39,10 @@ class HomeBinding extends Bindings {
       () => HomeLocalDataSourceImpl(activityService: Get.find<ActivityService>(), hive: Get.find<HiveInterface>()),
     );
     Get.lazyPut<RecommendationDataSource>(
-      () => RecommendationDataSourceImpl(recommendationService: Get.find<RecommendationService>()),
+      () => RecommendationDataSourceImpl(
+        activityService: Get.find<ActivityService>(),
+        musicServices: Get.find<MusicServices>(),
+      ),
     );
 
     Get.lazyPut<HomeRepository>(

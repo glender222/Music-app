@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
 import '../../../domain/download/repository/download_repository.dart';
+import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../services/downloader.dart';
 import '../../../services/music_service.dart';
 import '../../../services/permission_service.dart';
@@ -22,6 +23,7 @@ import '../../../models/media_Item_builder.dart';
 
 class DownloadRepositoryImpl implements DownloadRepository {
   final Downloader _downloader = Get.find<Downloader>();
+  final SettingsRepository _settingsRepository = Get.find<SettingsRepository>();
   final _dio = Dio();
   MediaItem? _currentSong;
 
@@ -75,16 +77,16 @@ class DownloadRepositoryImpl implements DownloadRepository {
   }
 
   Future<bool> _checkPermissionNDir() async {
-    final settingsScreenController = Get.find<SettingsScreenController>();
+    final downloadPath = await _settingsRepository.getDownloadLocation();
+    final supportDir = (await getApplicationSupportDirectory()).path;
+    final isCurrentPathSupportDir = "$supportDir/Music" == downloadPath;
 
-    if (!settingsScreenController.isCurrentPathsupportDownDir &&
+    if (!isCurrentPathSupportDir &&
         !await PermissionService.getExtStoragePermission()) {
       return false;
     }
 
-    final dirPath =
-        Get.find<SettingsScreenController>().downloadLocationPath.string;
-    final directory = Directory(dirPath);
+    final directory = Directory(downloadPath);
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
@@ -140,9 +142,7 @@ class DownloadRepositoryImpl implements DownloadRepository {
 
   Future<void> _writeFileStream(MediaItem song) async {
     Completer<void> complete = Completer();
-    final settingsScreenController = Get.find<SettingsScreenController>();
-    final downloadingFormat =
-        settingsScreenController.downloadingFormat.string;
+    final downloadingFormat = _settingsRepository.getDownloadingFormat();
     final playerResponse = await StreamProvider.fetch(song.id);
     if (!playerResponse.playable) {
       ScaffoldMessenger.of(Get.context!).showSnackBar(snackbar(
@@ -159,7 +159,7 @@ class DownloadRepositoryImpl implements DownloadRepository {
     Audio requiredAudioStream = downloadingFormat == "opus"
         ? playerResponse.highestBitrateOpusAudio!
         : playerResponse.highestBitrateMp4aAudio!;
-    final dirPath = settingsScreenController.downloadLocationPath.string;
+    final dirPath = await _settingsRepository.getDownloadLocation();
     final actualDownformat =
         requiredAudioStream.audioCodec.name.contains("mp") ? "m4a" : "opus";
     final RegExp invalidChar =
@@ -188,8 +188,9 @@ class DownloadRepositoryImpl implements DownloadRepository {
           }
         } catch (_) {}
         try {
+          final supportDir = (await getApplicationSupportDirectory()).path;
           final thumbnailPath =
-              "${settingsScreenController.supportDirPath}/thumbnails/${song.id}.png";
+              "$supportDir/thumbnails/${song.id}.png";
           await _dio.downloadUri(song.artUri!, thumbnailPath);
         } catch (e) {}
         song.extras?['url'] = filePath;

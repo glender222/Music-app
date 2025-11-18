@@ -23,7 +23,7 @@ El objetivo es migrar las funcionalidades pendientes a la Arquitectura Limpia pa
     3.  **Capa de `Presentation`:** Modificar el `SettingsScreenController` para que obtenga y guarde las configuraciones a través de los nuevos casos de uso.
 
 **3. Refactorizar el Sistema de Recomendaciones**
-*   **Estado:** PENDIENTE.
+*   **Estado:** ¡COMPLETADO!
 *   **Porqué:** Como se menciona en `REFACTORING.md`, aunque la carga de recomendaciones en la pantalla de inicio ya usa un caso de uso, el servicio subyacente (`RecommendationService`) todavía tiene lógica que podría ser abstraída.
 *   **Cómo:**
     1.  **Capa de `Domain`:** Asegurarse de que el `RecommendationRepository` (o el `HomeRepository` si se decide unificar) defina un contrato claro para obtener recomendaciones.
