@@ -20,10 +20,12 @@ import '../../../domain/search/repository/search_repository.dart';
 import '../../../domain/search/usecases/get_search_continuation_usecase.dart';
 import '../../../domain/search/usecases/get_search_suggestions_usecase.dart';
 import '../../../domain/search/usecases/search_usecase.dart';
+import 'download_binding.dart';
 
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
+    DownloadBinding().dependencies();
     Get.lazyPut<SearchRepository>(() => SearchRepositoryImpl());
     Get.lazyPut(() => GetSearchSuggestionsUseCase());
     Get.lazyPut(() => SearchUseCase());

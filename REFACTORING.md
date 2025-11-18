@@ -7,7 +7,7 @@ El objetivo es migrar las funcionalidades pendientes a la Arquitectura Limpia pa
 ### 🚧 Hoja de Ruta
 
 **1. Refactorizar la Gestión de Descargas**
-*   **Estado:** PENDIENTE.
+*   **Estado:** ¡COMPLETADO!
 *   **Porqué:** Actualmente, el servicio `Downloader` (`lib/services/downloader.dart`) tiene una gran responsabilidad. Mezcla la lógica de negocio (gestión de colas, permisos) con el acceso a datos (descarga de archivos, escritura de metadatos), lo que lo hace complejo y difícil de probar.
 *   **Cómo:**
     1.  **Capa de `Domain`:** Crear un `DownloadRepository` con la definición de las operaciones (ej. `downloadSong`, `getQueue`, `cancelDownload`). Luego, crear casos de uso como `DownloadSongUseCase`.

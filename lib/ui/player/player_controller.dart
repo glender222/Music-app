@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
+import '../../domain/download/usecases/download_song_usecase.dart';
 import '../../models/playling_from.dart';
 import '../../services/activity_service.dart';
-import '../../services/downloader.dart';
 import '../screens/Playlist/playlist_screen_controller.dart';
 import '../widgets/snackbar.dart';
 import '/services/synced_lyrics_service.dart';
@@ -667,7 +667,7 @@ class PlayerController extends GetxController
             .autoDownloadFavoriteSongEnabled
             .isTrue &&
         isCurrentSongFav.isTrue) {
-      Get.find<Downloader>().download(currMediaItem);
+      Get.find<DownloadSongUseCase>().call(currMediaItem);
     }
   }
 

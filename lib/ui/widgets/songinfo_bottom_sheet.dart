@@ -6,7 +6,7 @@ import 'package:ionicons/ionicons.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../services/downloader.dart';
+import '../../domain/download/usecases/download_song_usecase.dart';
 import '../screens/Playlist/playlist_screen_controller.dart';
 import '../screens/Settings/settings_screen_controller.dart';
 import '/utils/helper.dart';
@@ -392,7 +392,7 @@ class SongInfoController extends GetxController
             .autoDownloadFavoriteSongEnabled
             .isTrue &&
         isCurrentSongFav.isTrue) {
-      Get.find<Downloader>().download(song);
+      Get.find<DownloadSongUseCase>().call(song);
     }
   }
 }
