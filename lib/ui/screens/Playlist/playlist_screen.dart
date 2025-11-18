@@ -284,7 +284,7 @@ class PlaylistScreen extends StatelessWidget {
                                                       if (!context.mounted) {
                                                         return;
                                                       }
-                                      
+
                                                       ScaffoldMessenger.of(
                                                               context)
                                                           .showSnackBar(snackbar(
@@ -355,7 +355,7 @@ class PlaylistScreen extends StatelessWidget {
                                                     .titleMedium!
                                                     .color,
                                               )),
-                                      
+
                                           // Shuffle button
                                           IconButton(
                                               tooltip: "shuffle".tr,
@@ -449,7 +449,7 @@ class PlaylistScreen extends StatelessWidget {
                                                               Icons.download),
                                             );
                                           }),
-                                      
+
                                           if (playlistController
                                               .isAddedToLibrary.isTrue)
                                             IconButton(
@@ -513,7 +513,7 @@ class PlaylistScreen extends StatelessWidget {
                                                           "VL";
                                                   String url =
                                                       "https://youtube.com/playlist?list=";
-                                      
+
                                                   url = isPlaylistIdPrefixAvlbl
                                                       ? url +
                                                           content.playlistId
