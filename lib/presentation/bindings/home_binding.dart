@@ -15,9 +15,15 @@ import 'package:harmonymusic/domain/home/usecases/cache_home_content_usecase.dar
 import 'package:harmonymusic/domain/home/usecases/get_quick_picks_usecase.dart';
 import 'package:hive/hive.dart';
 
+import '../../../data/search/repository/search_repository_impl.dart';
+import '../../../domain/search/repository/search_repository.dart';
+import '../../../domain/search/usecases/get_search_suggestions_usecase.dart';
+
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
+    Get.lazyPut<SearchRepository>(() => SearchRepositoryImpl());
+    Get.lazyPut(() => GetSearchSuggestionsUseCase());
     Get.lazyPut<HomeRemoteDataSource>(
       () => HomeRemoteDataSourceImpl(musicServices: Get.find<MusicServices>()),
     );

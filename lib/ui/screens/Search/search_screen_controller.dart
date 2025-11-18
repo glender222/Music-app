@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 
 import '/utils/app_link_controller.dart' show ProcessLink;
-import '/services/music_service.dart';
+import '../../../domain/search/usecases/get_search_suggestions_usecase.dart';
 
 class SearchScreenController extends GetxController with ProcessLink {
   final textInputController = TextEditingController();
-  final musicServices = Get.find<MusicServices>();
+  final _getSearchSuggestionsUseCase = Get.find<GetSearchSuggestionsUseCase>();
   final suggestionList = [].obs;
   final historyQuerylist = [].obs;
   late Box<dynamic> queryBox;
@@ -39,7 +39,7 @@ class SearchScreenController extends GetxController with ProcessLink {
       return;
     }
     urlPasted.value = false;
-    suggestionList.value = await musicServices.getSearchSuggestion(text);
+    suggestionList.value = await _getSearchSuggestionsUseCase(text);
   }
 
   Future<void> suggestionInput(String txt) async {
