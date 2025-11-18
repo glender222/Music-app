@@ -17,13 +17,17 @@ import 'package:hive/hive.dart';
 
 import '../../../data/search/repository/search_repository_impl.dart';
 import '../../../domain/search/repository/search_repository.dart';
+import '../../../domain/search/usecases/get_search_continuation_usecase.dart';
 import '../../../domain/search/usecases/get_search_suggestions_usecase.dart';
+import '../../../domain/search/usecases/search_usecase.dart';
 
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<SearchRepository>(() => SearchRepositoryImpl());
     Get.lazyPut(() => GetSearchSuggestionsUseCase());
+    Get.lazyPut(() => SearchUseCase());
+    Get.lazyPut(() => GetSearchContinuationUseCase());
     Get.lazyPut<HomeRemoteDataSource>(
       () => HomeRemoteDataSourceImpl(musicServices: Get.find<MusicServices>()),
     );
