@@ -1,27 +1,68 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/services/permission_service.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
-import '../../../utils/update_check_flag_file.dart';
-import '/services/piped_service.dart';
-import '../Library/library_controller.dart';
-import '../../widgets/snackbar.dart';
+import '../../../domain/settings/usecases/clear_images_cache_usecase.dart';
+import '../../../domain/settings/usecases/enable_ignoring_battery_optimizations_usecase.dart';
+import '../../../domain/settings/usecases/get_app_language_usecase.dart';
+import '../../../domain/settings/usecases/get_discover_content_type_usecase.dart';
+import '../../../domain/settings/usecases/get_download_location_usecase.dart';
+import '../../../domain/settings/usecases/get_downloading_format_usecase.dart';
+import '../../../domain/settings/usecases/get_exported_location_usecase.dart';
+import '../../../domain/settings/usecases/get_home_screen_content_number_usecase.dart';
+import '../../../domain/settings/usecases/get_player_ui_usecase.dart';
+import '../../../domain/settings/usecases/get_streaming_quality_usecase.dart';
+import '../../../domain/settings/usecases/get_theme_mode_usecase.dart';
+import '../../../domain/settings/usecases/is_auto_download_favorite_song_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_background_play_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_bottom_nav_bar_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_cache_home_screen_data_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_caching_songs_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_ignoring_battery_optimizations_usecase.dart';
+import '../../../domain/settings/usecases/is_loudness_normalization_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_piped_linked_usecase.dart';
+import '../../../domain/settings/usecases/is_skip_silence_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_slidable_action_enabled_usecase.dart';
+import '../../../domain/settings/usecases/is_transition_animation_disabled_usecase.dart';
+import '../../../domain/settings/usecases/reset_app_settings_to_default_usecase.dart';
+import '../../../domain/settings/usecases/reset_download_location_usecase.dart';
+import '../../../domain/settings/usecases/set_app_language_usecase.dart';
+import '../../../domain/settings/usecases/set_auto_download_favorite_song_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_auto_open_player_usecase.dart';
+import '../../../domain/settings/usecases/set_background_play_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_bottom_nav_bar_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_cache_home_screen_data_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_caching_songs_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_discover_content_type_usecase.dart';
+import '../../../domain/settings/usecases/set_download_location_usecase.dart';
+import '../../../domain/settings/usecases/set_downloading_format_usecase.dart';
+import '../../../domain/settings/usecases/set_exported_location_usecase.dart';
+import '../../../domain/settings/usecases/set_home_screen_content_number_usecase.dart';
+import '../../../domain/settings/usecases/set_loudness_normalization_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_player_ui_usecase.dart';
+import '../../../domain/settings/usecases/set_restore_playback_session_usecase.dart';
+import '../../../domain/settings/usecases/set_skip_silence_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_slidable_action_enabled_usecase.dart';
+import '../../../domain/settings/usecases/set_stop_playback_on_swipe_away_usecase.dart';
+import '../../../domain/settings/usecases/set_streaming_quality_usecase.dart';
+import '../../../domain/settings/usecases/set_theme_mode_usecase.dart';
+import '../../../domain/settings/usecases/set_transition_animation_disabled_usecase.dart';
+import '../../../domain/settings/usecases/should_auto_open_player_usecase.dart';
+import '../../../domain/settings/usecases/should_restore_playback_session_usecase.dart';
+import '../../../domain/settings/usecases/should_stop_playback_on_swipe_away_usecase.dart';
+import '../../../domain/settings/usecases/unlink_piped_usecase.dart';
+import '../../../services/music_service.dart';
 import '../../../utils/helper.dart';
-import '/services/music_service.dart';
-import '/ui/player/player_controller.dart';
+import '../../../utils/update_check_flag_file.dart';
+import '../../player/player_controller.dart';
+import '../../utils/theme_controller.dart';
 import '../Home/home_screen_controller.dart';
-import '/ui/utils/theme_controller.dart';
 
 class SettingsScreenController extends GetxController {
   late String _supportDir;
   final cacheSongs = false.obs;
-  final setBox = Hive.box("AppPrefs");
   final themeModetype = ThemeType.dynamic.obs;
   final skipSilenceEnabled = false.obs;
   final loudnessNormalizationEnabled = false.obs;
@@ -47,6 +88,57 @@ class SettingsScreenController extends GetxController {
   final restorePlaybackSession = false.obs;
   final cacheHomeScreenData = true.obs;
   final currentVersion = "V1.12.1";
+
+  // Use Cases
+  final _getAppLanguageUseCase = Get.find<GetAppLanguageUseCase>();
+  final _setAppLanguageUseCase = Get.find<SetAppLanguageUseCase>();
+  final _getHomeScreenContentNumberUseCase = Get.find<GetHomeScreenContentNumberUseCase>();
+  final _setHomeScreenContentNumberUseCase = Get.find<SetHomeScreenContentNumberUseCase>();
+  final _getStreamingQualityUseCase = Get.find<GetStreamingQualityUseCase>();
+  final _setStreamingQualityUseCase = Get.find<SetStreamingQualityUseCase>();
+  final _getPlayerUiUseCase = Get.find<GetPlayerUiUseCase>();
+  final _setPlayerUiUseCase = Get.find<SetPlayerUiUseCase>();
+  final _isBottomNavBarEnabledUseCase = Get.find<IsBottomNavBarEnabledUseCase>();
+  final _setBottomNavBarEnabledUseCase = Get.find<SetBottomNavBarEnabledUseCase>();
+  final _isSlidableActionEnabledUseCase = Get.find<IsSlidableActionEnabledUseCase>();
+  final _setSlidableActionEnabledUseCase = Get.find<SetSlidableActionEnabledUseCase>();
+  final _getDownloadingFormatUseCase = Get.find<GetDownloadingFormatUseCase>();
+  final _setDownloadingFormatUseCase = Get.find<SetDownloadingFormatUseCase>();
+  final _getExportedLocationUseCase = Get.find<GetExportedLocationUseCase>();
+  final _setExportedLocationUseCase = Get.find<SetExportedLocationUseCase>();
+  final _getDownloadLocationUseCase = Get.find<GetDownloadLocationUseCase>();
+  final _setDownloadLocationUseCase = Get.find<SetDownloadLocationUseCase>();
+  final _resetDownloadLocationUseCase = Get.find<ResetDownloadLocationUseCase>();
+  final _isTransitionAnimationDisabledUseCase = Get.find<IsTransitionAnimationDisabledUseCase>();
+  final _setTransitionAnimationDisabledUseCase = Get.find<SetTransitionAnimationDisabledUseCase>();
+  final _clearImagesCacheUseCase = Get.find<ClearImagesCacheUseCase>();
+  final _getThemeModeUseCase = Get.find<GetThemeModeUseCase>();
+  final _setThemeModeUseCase = Get.find<SetThemeModeUseCase>();
+  final _getDiscoverContentTypeUseCase = Get.find<GetDiscoverContentTypeUseCase>();
+  final _setDiscoverContentTypeUseCase = Get.find<SetDiscoverContentTypeUseCase>();
+  final _isCachingSongsEnabledUseCase = Get.find<IsCachingSongsEnabledUseCase>();
+  final _setCachingSongsEnabledUseCase = Get.find<SetCachingSongsEnabledUseCase>();
+  final _isSkipSilenceEnabledUseCase = Get.find<IsSkipSilenceEnabledUseCase>();
+  final _setSkipSilenceEnabledUseCase = Get.find<SetSkipSilenceEnabledUseCase>();
+  final _isLoudnessNormalizationEnabledUseCase = Get.find<IsLoudnessNormalizationEnabledUseCase>();
+  final _setLoudnessNormalizationEnabledUseCase = Get.find<SetLoudnessNormalizationEnabledUseCase>();
+  final _shouldRestorePlaybackSessionUseCase = Get.find<ShouldRestorePlaybackSessionUseCase>();
+  final _setRestorePlaybackSessionUseCase = Get.find<SetRestorePlaybackSessionUseCase>();
+  final _isCacheHomeScreenDataEnabledUseCase = Get.find<IsCacheHomeScreenDataEnabledUseCase>();
+  final _setCacheHomeScreenDataEnabledUseCase = Get.find<SetCacheHomeScreenDataEnabledUseCase>();
+  final _isAutoDownloadFavoriteSongEnabledUseCase = Get.find<IsAutoDownloadFavoriteSongEnabledUseCase>();
+  final _setAutoDownloadFavoriteSongEnabledUseCase = Get.find<SetAutoDownloadFavoriteSongEnabledUseCase>();
+  final _isBackgroundPlayEnabledUseCase = Get.find<IsBackgroundPlayEnabledUseCase>();
+  final _setBackgroundPlayEnabledUseCase = Get.find<SetBackgroundPlayEnabledUseCase>();
+  final _isIgnoringBatteryOptimizationsUseCase = Get.find<IsIgnoringBatteryOptimizationsUseCase>();
+  final _enableIgnoringBatteryOptimizationsUseCase = Get.find<EnableIgnoringBatteryOptimizationsUseCase>();
+  final _shouldAutoOpenPlayerUseCase = Get.find<ShouldAutoOpenPlayerUseCase>();
+  final _setAutoOpenPlayerUseCase = Get.find<SetAutoOpenPlayerUseCase>();
+  final _isPipedLinkedUseCase = Get.find<IsPipedLinkedUseCase>();
+  final _unlinkPipedUseCase = Get.find<UnlinkPipedUseCase>();
+  final _resetAppSettingsToDefaultUseCase = Get.find<ResetAppSettingsToDefaultUseCase>();
+  final _shouldStopPlaybackOnSwipeAwayUseCase = Get.find<ShouldStopPlaybackOnSwipeAwayUseCase>();
+  final _setStopPlaybackOnSwipeAwayUseCase = Get.find<SetStopPlaybackOnSwipeAwayUseCase>();
 
   @override
   void onInit() {
@@ -76,56 +168,35 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> _setInitValue() async {
-    final isDesktop = GetPlatform.isDesktop;
-    final appLang = setBox.get('currentAppLanguageCode') ?? "en";
-    currentAppLanguageCode.value = appLang == "zh_Hant"
-        ? "zh-TW"
-        : appLang == "zh_Hans"
-            ? "zh-CN"
-            : appLang;
-    isBottomNavBarEnabled.value =
-        isDesktop ? false : (setBox.get("isBottomNavBarEnabled") ?? false);
-    noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
+    currentAppLanguageCode.value = _getAppLanguageUseCase();
+    isBottomNavBarEnabled.value = _isBottomNavBarEnabledUseCase();
+    noOfHomeScreenContent.value = _getHomeScreenContentNumberUseCase();
     isTransitionAnimationDisabled.value =
-        setBox.get("isTransitionAnimationDisabled") ?? false;
-    cacheSongs.value = setBox.get('cacheSongs') ?? false;
-    themeModetype.value = ThemeType.values[setBox.get('themeModeType') ?? 0];
-    skipSilenceEnabled.value =
-        isDesktop ? false : setBox.get("skipSilenceEnabled");
-    loudnessNormalizationEnabled.value = isDesktop
-        ? false
-        : (setBox.get("loudnessNormalizationEnabled") ?? false);
-    autoOpenPlayer.value = (setBox.get("autoOpenPlayer") ?? true);
+        _isTransitionAnimationDisabledUseCase();
+    cacheSongs.value = _isCachingSongsEnabledUseCase();
+    themeModetype.value = _getThemeModeUseCase();
+    skipSilenceEnabled.value = _isSkipSilenceEnabledUseCase();
+    loudnessNormalizationEnabled.value =
+        _isLoudnessNormalizationEnabledUseCase();
+    autoOpenPlayer.value = _shouldAutoOpenPlayerUseCase();
     restorePlaybackSession.value =
-        setBox.get("restrorePlaybackSession") ?? false;
-    cacheHomeScreenData.value = setBox.get("cacheHomeScreenData") ?? true;
-    streamingQuality.value =
-        AudioQuality.values[setBox.get('streamingQuality')];
-    playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
-    backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
-    final downloadPath =
-        setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
-    downloadLocationPath.value =
-        (isDesktop && downloadPath.contains("emulated"))
-            ? await _createInAppSongDownDir()
-            : downloadPath;
-
-    exportLocationPath.value =
-        setBox.get("exportLocationPath") ?? "/storage/emulated/0/Music";
-    downloadingFormat.value = setBox.get('downloadingFormat') ?? "m4a";
-    discoverContentType.value = setBox.get('discoverContentType') ?? "QP";
-    slidableActionEnabled.value = setBox.get('slidableActionEnabled') ?? true;
-    if (setBox.containsKey("piped")) {
-      isLinkedWithPiped.value = setBox.get("piped")['isLoggedIn'];
-    }
+        _shouldRestorePlaybackSessionUseCase();
+    cacheHomeScreenData.value = _isCacheHomeScreenDataEnabledUseCase();
+    streamingQuality.value = _getStreamingQualityUseCase();
+    playerUi.value = _getPlayerUiUseCase();
+    backgroundPlayEnabled.value = _isBackgroundPlayEnabledUseCase();
+    downloadLocationPath.value = await _getDownloadLocationUseCase();
+    exportLocationPath.value = await _getExportedLocationUseCase();
+    downloadingFormat.value = _getDownloadingFormatUseCase();
+    discoverContentType.value = _getDiscoverContentTypeUseCase();
+    slidableActionEnabled.value = _isSlidableActionEnabledUseCase();
+    isLinkedWithPiped.value = await _isPipedLinkedUseCase();
     stopPlyabackOnSwipeAway.value =
-        setBox.get('stopPlyabackOnSwipeAway') ?? false;
-    if (GetPlatform.isAndroid) {
-      isIgnoringBatteryOptimizations.value =
-          (await Permission.ignoreBatteryOptimizations.isGranted);
-    }
+        _shouldStopPlaybackOnSwipeAwayUseCase();
+    isIgnoringBatteryOptimizations.value =
+        await _isIgnoringBatteryOptimizationsUseCase();
     autoDownloadFavoriteSongEnabled.value =
-        setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
+        _isAutoDownloadFavoriteSongEnabledUseCase();
   }
 
   void setAppLanguage(String? val) {
@@ -133,26 +204,25 @@ class SettingsScreenController extends GetxController {
     Get.find<MusicServices>().hlCode = val;
     Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
     currentAppLanguageCode.value = val;
-    setBox.put('currentAppLanguageCode', val);
+    _setAppLanguageUseCase(val);
   }
 
   void setContentNumber(int? no) {
     noOfHomeScreenContent.value = no!;
-    setBox.put("noOfHomeScreenContent", no);
+    _setHomeScreenContentNumberUseCase(no);
   }
 
   void setStreamingQuality(dynamic val) {
-    setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
+    _setStreamingQualityUseCase(val);
     streamingQuality.value = val;
   }
 
   void setPlayerUi(dynamic val) {
     final playerCon = Get.find<PlayerController>();
-    setBox.put("playerUi", val);
+    _setPlayerUiUseCase(val);
     if (val == 1 && playerCon.gesturePlayerStateAnimationController == null) {
       playerCon.initGesturePlayerStateAnimationController();
     }
-
     playerUi.value = val;
   }
 
@@ -170,47 +240,27 @@ class SettingsScreenController extends GetxController {
       playerCon.playerPanelMinHeight.value =
           val ? 75.0 : 75.0 + Get.mediaQuery.viewPadding.bottom;
     }
-    setBox.put("isBottomNavBarEnabled", val);
+    _setBottomNavBarEnabledUseCase(val);
   }
 
   void toggleSlidableAction(bool val) {
-    setBox.put("slidableActionEnabled", val);
+    _setSlidableActionEnabledUseCase(val);
     slidableActionEnabled.value = val;
   }
 
   void changeDownloadingFormat(String? val) {
-    setBox.put("downloadingFormat", val);
-    downloadingFormat.value = val!;
+    _setDownloadingFormatUseCase(val!);
+    downloadingFormat.value = val;
   }
 
   Future<void> setExportedLocation() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    final String? pickedFolderPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "Select export file folder");
-    if (pickedFolderPath == '/' || pickedFolderPath == null) {
-      return;
-    }
-
-    setBox.put("exportLocationPath", pickedFolderPath);
-    exportLocationPath.value = pickedFolderPath;
+    await _setExportedLocationUseCase();
+    exportLocationPath.value = await _getExportedLocationUseCase();
   }
 
   Future<void> setDownloadLocation() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    final String? pickedFolderPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "Select downloads folder");
-    if (pickedFolderPath == '/' || pickedFolderPath == null) {
-      return;
-    }
-
-    setBox.put("downloadLocationPath", pickedFolderPath);
-    downloadLocationPath.value = pickedFolderPath;
+    await _setDownloadLocationUseCase();
+    downloadLocationPath.value = await _getDownloadLocationUseCase();
   }
 
   void showDownLoc() {
@@ -218,126 +268,89 @@ class SettingsScreenController extends GetxController {
   }
 
   void disableTransitionAnimation(bool val) {
-    setBox.put('isTransitionAnimationDisabled', val);
+    _setTransitionAnimationDisabledUseCase(val);
     isTransitionAnimationDisabled.value = val;
   }
 
   Future<void> clearImagesCache() async {
-    final tempImgDirPath =
-        "${(await getApplicationCacheDirectory()).path}/libCachedImageData";
-    final tempImgDir = Directory(tempImgDirPath);
-    try {
-      if (await tempImgDir.exists()) {
-        await tempImgDir.delete(recursive: true);
-      }
-      // ignore: empty_catches
-    } catch (e) {}
+    await _clearImagesCacheUseCase();
   }
 
   void resetDownloadLocation() {
-    final defaultPath = "$_supportDir/Music";
-    setBox.put("downloadLocationPath", defaultPath);
-    downloadLocationPath.value = defaultPath;
+    _resetDownloadLocationUseCase();
   }
 
   void onThemeChange(dynamic val) {
-    setBox.put('themeModeType', ThemeType.values.indexOf(val));
+    _setThemeModeUseCase(val);
     themeModetype.value = val;
     Get.find<ThemeController>().changeThemeModeType(val);
   }
 
   void onContentChange(dynamic value) {
-    setBox.put('discoverContentType', value);
+    _setDiscoverContentTypeUseCase(value);
     discoverContentType.value = value;
     Get.find<HomeScreenController>().changeDiscoverContent(value);
   }
 
   void toggleCachingSongsValue(bool value) {
-    setBox.put("cacheSongs", value);
+    _setCachingSongsEnabledUseCase(value);
     cacheSongs.value = value;
   }
 
   void toggleSkipSilence(bool val) {
     Get.find<PlayerController>().toggleSkipSilence(val);
-    setBox.put('skipSilenceEnabled', val);
+    _setSkipSilenceEnabledUseCase(val);
     skipSilenceEnabled.value = val;
   }
 
   void toggleLoudnessNormalization(bool val) {
     Get.find<PlayerController>().toggleLoudnessNormalization(val);
-    setBox.put("loudnessNormalizationEnabled", val);
+    _setLoudnessNormalizationEnabledUseCase(val);
     loudnessNormalizationEnabled.value = val;
   }
 
   void toggleRestorePlaybackSession(bool val) {
-    setBox.put("restrorePlaybackSession", val);
+    _setRestorePlaybackSessionUseCase(val);
     restorePlaybackSession.value = val;
   }
 
   Future<void> toggleCacheHomeScreenData(bool val) async {
-    setBox.put("cacheHomeScreenData", val);
+    _setCacheHomeScreenDataEnabledUseCase(val);
     cacheHomeScreenData.value = val;
-    if (!val) {
-      Hive.openBox("homeScreenData").then((box) async {
-        await box.clear();
-        await box.close();
-      });
-    } else {
-      await Hive.openBox("homeScreenData");
-      Get.find<HomeScreenController>().cachedHomeScreenData(updateAll: true);
-    }
   }
 
   void toggleAutoDownloadFavoriteSong(bool val) {
-    setBox.put("autoDownloadFavoriteSongEnabled", val);
+    _setAutoDownloadFavoriteSongEnabledUseCase(val);
     autoDownloadFavoriteSongEnabled.value = val;
   }
 
   void toggleBackgroundPlay(bool val) {
-    setBox.put('backgroundPlayEnabled', val);
+    _setBackgroundPlayEnabledUseCase(val);
     backgroundPlayEnabled.value = val;
   }
 
   Future<void> enableIgnoringBatteryOptimizations() async {
-    await Permission.ignoreBatteryOptimizations.request();
+    await _enableIgnoringBatteryOptimizationsUseCase();
     isIgnoringBatteryOptimizations.value =
-        await Permission.ignoreBatteryOptimizations.isGranted;
+        await _isIgnoringBatteryOptimizationsUseCase();
   }
 
   void toggleAutoOpenPlayer(bool val) {
-    setBox.put('autoOpenPlayer', val);
+    _setAutoOpenPlayerUseCase(val);
     autoOpenPlayer.value = val;
   }
 
   Future<void> unlinkPiped() async {
-    Get.find<PipedServices>().logout();
+    await _unlinkPipedUseCase();
     isLinkedWithPiped.value = false;
-    Get.find<LibraryPlaylistsController>().removePipedPlaylists();
-    final box = await Hive.openBox('blacklistedPlaylist');
-    box.clear();
-    ScaffoldMessenger.of(Get.context!).showSnackBar(
-        snackbar(Get.context!, "unlinkAlert".tr, size: SanckBarSize.MEDIUM));
-    box.close();
   }
 
   Future<void> resetAppSettingsToDefault() async {
-    await setBox.clear();
+    await _resetAppSettingsToDefaultUseCase();
   }
 
   void toggleStopPlyabackOnSwipeAway(bool val) {
-    setBox.put('stopPlyabackOnSwipeAway', val);
+    _setStopPlaybackOnSwipeAwayUseCase(val);
     stopPlyabackOnSwipeAway.value = val;
-  }
-
-  Future<void> closeAllDatabases() async {
-    await Hive.close();
-  }
-
-  Future<String> get dbDir async {
-    if (GetPlatform.isDesktop) {
-      return "$supportDirPath/db";
-    } else {
-      return (await getApplicationDocumentsDirectory()).path;
-    }
   }
 }
