@@ -15,7 +15,7 @@ El objetivo es migrar las funcionalidades pendientes a la Arquitectura Limpia pa
     3.  **Capa de `Presentation`:** Actualizar la UI relacionada con las descargas para que utilice los nuevos casos de uso en lugar de llamar directamente al `Downloader`.
 
 **2. Refactorizar las Configuraciones y Preferencias**
-*   **Estado:** PENDIENTE.
+*   **Estado:** ¡COMPLETADO!
 *   **Porqué:** El `SettingsScreenController` (`lib/ui/screens/Settings/settings_screen_controller.dart`) interactúa directamente con `Hive` para leer y escribir todas las preferencias del usuario. Esto acopla fuertemente la pantalla de configuración con la implementación de la base de datos.
 *   **Cómo:**
     1.  **Capa de `Domain`:** Definir un `SettingsRepository` con métodos para cada preferencia (ej. `getTheme`, `saveTheme`, `getStreamingQuality`). Crear casos de uso para cada operación.
